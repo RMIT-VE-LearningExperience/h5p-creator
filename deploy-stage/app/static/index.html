@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H5P Creator</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Word to H5P</p>
+        <h1>Upload a document, preview the structure, then export one H5P file.</h1>
+        <p class="lede">
+          This flow keeps the app focused on one input and one output, while still helping you
+          choose the right activity type before generation.
+        </p>
+      </div>
+      <div class="hero-card">
+        <div class="metric">
+          <span>1</span>
+          <p>Upload a `.docx`</p>
+        </div>
+        <div class="metric">
+          <span>2</span>
+          <p>Review suggested structure</p>
+        </div>
+        <div class="metric">
+          <span>3</span>
+          <p>Generate and download `.h5p`</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <form id="generator-form" class="form-grid">
+        <label class="upload-zone" for="file-input">
+          <input id="file-input" name="file" type="file" accept=".docx" required>
+          <strong id="file-label">Choose a Word document</strong>
+          <span>Drag and drop is supported by the browser file picker.</span>
+        </label>
+
+        <div class="control-row">
+          <label>
+            <span>AI provider</span>
+            <select id="ai-provider" name="ai_provider">
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Model</span>
+            <input id="model-name" name="model" type="text" value="gpt-4o-2024-08-06">
+          </label>
+        </div>
+
+        <div class="control-row">
+          <label>
+            <span>Activity type</span>
+            <select id="activity-type" name="activity_type">
+              <option value="auto">Auto-detect</option>
+              <option value="H5P.QuestionSet">Multiple Choice Quiz</option>
+              <option value="H5P.CoursePresentation">Presentation</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Pass percentage</span>
+            <input id="pass-percentage" name="pass_percentage" type="number" min="1" max="100" value="50">
+          </label>
+        </div>
+
+        <div class="button-row">
+          <button type="button" id="preview-button" class="secondary">Preview document</button>
+          <button type="submit" id="generate-button">Generate H5P</button>
+        </div>
+      </form>
+      <p id="status" class="status">Upload a `.docx` to begin.</p>
+    </section>
+
+    <section class="panel two-column">
+      <article>
+        <div class="section-header">
+          <h2>Preview</h2>
+          <span id="suggested-badge" class="badge hidden"></span>
+        </div>
+        <div id="analysis-summary" class="summary empty">
+          Document analysis will appear here after preview.
+        </div>
+        <div id="suggestions" class="suggestions"></div>
+      </article>
+
+      <article>
+        <div class="section-header">
+          <h2>Section view</h2>
+          <span class="muted">A fast preview of what the parser sees</span>
+        </div>
+        <div id="section-preview" class="section-preview empty">
+          No preview yet.
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-header">
+        <h2>Breakdown Plan</h2>
+        <span id="breakdown-badge" class="muted">The app will suggest splits for large documents.</span>
+      </div>
+      <div id="breakdown-plans" class="breakdown-plans empty">
+        No breakdown suggestions yet.
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-header">
+        <h2>Output</h2>
+      </div>
+      <div id="output" class="output empty">
+        Generated file details will appear here.
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

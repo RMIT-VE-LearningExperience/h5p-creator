@@ -279,7 +279,7 @@ Return ONLY a single JSON object — no markdown fences, no explanation, no
 extra keys. The object must have exactly these three top-level keys:
 
 {
-  "content_type": "H5P.QuestionSet",      ← or "H5P.CoursePresentation"
+  "content_type": "H5P.QuestionSet",      ← or "H5P.MultiChoice" or "H5P.CoursePresentation"
   "title": "Human-readable activity title",
   "content": { ... complete H5P content JSON as shown above ... }
 }
@@ -350,16 +350,16 @@ def _process_with_openai(user_content: str, model_override: str | None) -> Proce
     model_name = model_override or settings.openai_model
     client = OpenAI(api_key=settings.openai_api_key)
 
-    response = client.responses.create(
+    response = client.chat.completions.create(
         model=model_name,
-        input=[
+        response_format={"type": "json_object"},
+        messages=[
             {"role": "system", "content": _H5P_SYSTEM_PROMPT},
             {"role": "user", "content": user_content},
         ],
-        text={"format": {"type": "json_object"}},
     )
 
-    raw_json = _strip_markdown_fences((response.output_text or "").strip())
+    raw_json = _strip_markdown_fences((response.choices[0].message.content or "").strip())
     if not raw_json:
         raise ValueError("OpenAI returned no text output")
     h5p_result = H5PResult.model_validate_json(raw_json)
@@ -371,8 +371,8 @@ def _process_with_openai(user_content: str, model_override: str | None) -> Proce
         model_used=model_name,
         cache_read_tokens=0,
         cache_write_tokens=0,
-        input_tokens=getattr(usage, "input_tokens", 0) or 0,
-        output_tokens=getattr(usage, "output_tokens", 0) or 0,
+        input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+        output_tokens=getattr(usage, "completion_tokens", 0) or 0,
     )
 
 
@@ -450,6 +450,8 @@ def _build_user_message(
         if section.heading:
             lines.append(f"{'#' * max(section.level, 1)} {section.heading}")
 
+        # Pair each paragraph with the list that follows it when counts match —
+        # this is the question-text + answer-options pattern.
         paired = (
             len(section.paragraphs) == len(section.lists) and section.paragraphs
         )
@@ -461,6 +463,7 @@ def _build_user_message(
                     lines.append(f"  {marker} {item.text}")
                 lines.append("")
         else:
+            # Heading-as-question: one heading with a single answer list
             if not section.paragraphs and len(section.lists) == 1 and section.heading:
                 lines.append(f"QUESTION: {section.heading}")
                 for item in section.lists[0]:

@@ -78,7 +78,7 @@ async def generate_activity(
 ) -> GenerateResponse:
     if ai_provider not in {"openai", "anthropic"}:
         raise HTTPException(status_code=400, detail="Unsupported AI provider")
-    if activity_type not in {"auto", "H5P.QuestionSet", "H5P.CoursePresentation", "H5P.MultiChoice"}:
+    if activity_type not in {"auto", "H5P.QuestionSet", "H5P.CoursePresentation"}:
         raise HTTPException(status_code=400, detail="Unsupported activity type")
     if not 0 < pass_percentage <= 100:
         raise HTTPException(status_code=400, detail="Pass percentage must be between 1 and 100")
