@@ -812,8 +812,8 @@ button:disabled {
 
 .result-card {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 12px;
   padding: 14px 16px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.9);
@@ -821,7 +821,6 @@ button:disabled {
 }
 
 .result-card-info {
-  flex: 1;
   min-width: 0;
 }
 
@@ -837,9 +836,6 @@ button:disabled {
 .result-card-title {
   font-size: 0.95rem;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .result-download-btn {
@@ -1111,12 +1107,6 @@ button:disabled {
 @media (max-width: 600px) {
   .type-grid {
     grid-template-columns: 1fr;
-  }
-
-  .result-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
   }
 
   .result-card-actions {
