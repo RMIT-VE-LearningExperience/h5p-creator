@@ -14,6 +14,10 @@ const generateButton   = document.getElementById("generate-button");
 const loaderWrap       = document.getElementById("loader-wrap");
 const loaderBar        = document.getElementById("loader-bar");
 const loaderMessage    = document.getElementById("loader-message");
+const activityCounter  = document.getElementById("activity-counter");
+const activityCountEl  = document.getElementById("activity-count");
+
+const MAX_ACTIVITIES = 5;
 
 const resultsTitleEl    = document.getElementById("results-title");
 const resultsCountBadge = document.getElementById("results-count-badge");
@@ -75,7 +79,10 @@ function updateFileTags() {
 
 // ── Type mix inputs → show para count when Sort Paragraphs > 0 ────────
 document.querySelectorAll('.type-count-input').forEach(input => {
-  input.addEventListener("input", updateConditionalFields);
+  input.addEventListener("input", () => {
+    updateConditionalFields();
+    updateActivityCounter();
+  });
 });
 
 function updateConditionalFields() {
@@ -84,10 +91,16 @@ function updateConditionalFields() {
   paraCountLabel.style.display = sortCount > 0 ? "" : "none";
 }
 
+function updateActivityCounter() {
+  const total = getExpandedTypes().length;
+  activityCountEl.textContent = total;
+  activityCounter.classList.toggle("at-limit", total >= MAX_ACTIVITIES);
+}
+
 function getTypeMix() {
   const mix = {};
   document.querySelectorAll('.type-count-input').forEach(input => {
-    const count = Math.max(0, Math.min(10, parseInt(input.value, 10) || 0));
+    const count = Math.max(0, Math.min(MAX_ACTIVITIES, parseInt(input.value, 10) || 0));
     if (count > 0) mix[input.dataset.type] = count;
   });
   return mix;
@@ -119,6 +132,7 @@ generateButton.addEventListener("click", async () => {
 
   const expandedTypes = getExpandedTypes();
   if (!expandedTypes.length) { setStatus("Set at least one activity type above 0.", false, true); return; }
+  if (expandedTypes.length > MAX_ACTIVITIES) { setStatus(`Beta limit: max ${MAX_ACTIVITIES} activities per run. Reduce your mix and try again.`, false, true); return; }
 
   const total = expandedTypes.length;
   generateButton.disabled = true;

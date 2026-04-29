@@ -30,6 +30,48 @@ body {
 
 /* ── RMIT Brand Bar ─────────────────────────────────────────────────── */
 
+/* ── Beta border ────────────────────────────────────────────────────── */
+
+.beta-border {
+  position: fixed;
+  inset: 0;
+  border: 5px solid #f97316;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.beta-notch {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f97316;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 4px 20px 6px;
+  border-radius: 0 0 10px 10px;
+  z-index: 10000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.beta-badge {
+  display: inline-block;
+  background: #f97316;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-left: 10px;
+  position: relative;
+  top: -2px;
+}
+
 .topbar {
   background: var(--rmit-red);
   height: 6px;
@@ -647,6 +689,20 @@ button:disabled {
   margin: 0 0 4px;
   font-weight: 600;
   font-size: 0.95rem;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.activity-counter {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.activity-counter.at-limit {
+  color: #f97316;
+  font-weight: 700;
 }
 
 /* ── Input mode tabs (Upload / Paste) ───────────────────────────────── */

@@ -14,10 +14,12 @@
   </script>
 </head>
 <body>
+  <div class="beta-border"></div>
+  <div class="beta-notch">BETA — DO NOT USE FOR PRODUCTION</div>
   <div class="topbar"></div>
   <header class="app-header">
     <p class="eyebrow">RMIT VE Learning Experience</p>
-    <h1 class="app-title">H5P Creator</h1>
+    <h1 class="app-title">H5P Creator <span class="beta-badge">BETA</span></h1>
   </header>
 
   <main class="shell">
@@ -67,7 +69,11 @@
 
         <!-- Activity mix -->
         <div>
-          <p class="field-label">Activity mix</p>
+          <p class="field-label">Activity mix
+            <span class="activity-counter" id="activity-counter">
+              <span id="activity-count">0</span> / 5 max
+            </span>
+          </p>
           <div class="type-mix-table">
 
             <div class="type-mix-group-label">Quiz</div>
@@ -76,21 +82,21 @@
                 <strong>Quiz (Multiple Choice)</strong>
                 <span>Multiple questions in a single scored set</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.QuestionSet" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.QuestionSet" min="0" max="5" value="0">
             </div>
             <div class="type-mix-row">
               <div class="type-mix-label">
                 <strong>Multiple Choice <span style="font-weight:400">(single)</span></strong>
                 <span>A single multiple-choice question</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.MultiChoice" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.MultiChoice" min="0" max="5" value="0">
             </div>
             <div class="type-mix-row">
               <div class="type-mix-label">
                 <strong>True / False</strong>
                 <span>A single true/false statement</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.TrueFalse" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.TrueFalse" min="0" max="5" value="0">
             </div>
 
             <div class="type-mix-group-label">Interactive Text</div>
@@ -99,21 +105,21 @@
                 <strong>Drag the Words</strong>
                 <span>Drag words into gaps in a sentence</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.DragText" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.DragText" min="0" max="5" value="0">
             </div>
             <div class="type-mix-row">
               <div class="type-mix-label">
                 <strong>Fill in the Blanks</strong>
                 <span>Type missing words into gaps</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.Blanks" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.Blanks" min="0" max="5" value="0">
             </div>
             <div class="type-mix-row">
               <div class="type-mix-label">
                 <strong>Guess the Answer</strong>
                 <span>A question with a revealed answer (unscored)</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.GuessTheAnswer" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.GuessTheAnswer" min="0" max="5" value="0">
             </div>
 
             <div class="type-mix-group-label">Organisation &amp; Summary</div>
@@ -122,14 +128,14 @@
                 <strong>Sort the Paragraphs</strong>
                 <span>Drag steps into the correct order</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.SortParagraphs" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.SortParagraphs" min="0" max="5" value="0">
             </div>
             <div class="type-mix-row">
               <div class="type-mix-label">
                 <strong>Summary</strong>
                 <span>Identify the correct statement from each group</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.Summary" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.Summary" min="0" max="5" value="0">
             </div>
 
             <div class="type-mix-group-label">Presentation</div>
@@ -138,7 +144,7 @@
                 <strong>Presentation</strong>
                 <span>Slide-based presentation activity</span>
               </div>
-              <input type="number" class="type-count-input" data-type="H5P.CoursePresentation" min="0" max="10" value="0">
+              <input type="number" class="type-count-input" data-type="H5P.CoursePresentation" min="0" max="5" value="0">
             </div>
 
           </div>
