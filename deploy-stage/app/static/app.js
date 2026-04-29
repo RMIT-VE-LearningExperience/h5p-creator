@@ -11,6 +11,9 @@ const paraCountInput   = document.getElementById("paragraph-count");
 const paraCountLabel   = document.getElementById("para-count-label");
 const statusEl         = document.getElementById("status");
 const generateButton   = document.getElementById("generate-button");
+const loaderWrap       = document.getElementById("loader-wrap");
+const loaderBar        = document.getElementById("loader-bar");
+const loaderMessage    = document.getElementById("loader-message");
 
 const resultsTitleEl    = document.getElementById("results-title");
 const resultsCountBadge = document.getElementById("results-count-badge");
@@ -118,8 +121,8 @@ generateButton.addEventListener("click", async () => {
   if (!expandedTypes.length) { setStatus("Set at least one activity type above 0.", false, true); return; }
 
   const total = expandedTypes.length;
-  setStatus(`Generating ${total} activit${total === 1 ? "y" : "ies"}`, true);
   generateButton.disabled = true;
+  GenerationLoader.start();
 
   const mix = getTypeMix();
   gtag("event", "generate_started", {
@@ -179,6 +182,7 @@ async function runBatchGenerate(files, types) {
     const payload = await readResponsePayload(response);
     if (!response.ok) throw new Error(extractErrorMessage(payload, "Generation failed"));
 
+    GenerationLoader.finish();
     renderResults(payload);
     const resultTypes = (payload.results || []).map(r => r.activity_type);
     gtag("event", "generate_completed", {
@@ -196,6 +200,7 @@ async function runBatchGenerate(files, types) {
       error_type:    isTimeout ? "timeout" : "server_error",
       error_message: msg.slice(0, 100),
     });
+    GenerationLoader.fail();
     setStatus(msg, false, true);
   }
 }
@@ -439,6 +444,119 @@ function parseAsteriskSyntax(escapedText, tokenClass) {
     return `<span class="${tokenClass}">${word}</span>`;
   });
 }
+
+// ── Generation loader ──────────────────────────────────────────────────
+const GenerationLoader = (() => {
+  const MESSAGES = [
+    "Consulting the ghost of Benjamin Bloom",
+    "Massaging learning outcomes into existence",
+    "Arguing with the AI about which distractors are plausible",
+    "Checking that the correct answer is actually correct",
+    "Generating H5P files nobody asked for… wait, you did",
+    "Converting caffeine into pedagogical content",
+    "Applying Constructivist theory (and hoping for the best)",
+    "Persuading a language model that education matters",
+    "Adding just enough scaffolding to be SCORM-compliant",
+    "Counting the blanks in Fill in the Blanks",
+    "Shuffling distractors to keep learners honest",
+    "Ensuring the True/False isn't obviously True",
+    "Translating your document into something learners will actually read",
+    "Calibrating difficulty — not too easy, not Bloom's Level 6 on day one",
+    "Making drag-and-drop slightly less frustrating than real life",
+    "Checking that Sort the Paragraphs is actually sortable",
+    "Negotiating with the content — it resists being educational",
+  ];
+  const FINAL_MSG = "Almost there — the AI is just triple-checking its work";
+
+  const STAGES = [
+    [12, 1500], [28, 2500], [42, 3500], [55, 5000],
+    [65, 7000], [73, 9000], [80, 12000], [85, 18000], [88, 30000],
+  ];
+
+  let msgTimer = null, stageTimer = null;
+  let msgIndex = 0, stageIndex = 0, finalShown = false, shuffled = [];
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function showMessage(text) {
+    loaderMessage.classList.add("fading");
+    setTimeout(() => {
+      loaderMessage.textContent = text;
+      loaderMessage.classList.remove("fading");
+    }, 300);
+  }
+
+  function cycleMessage() {
+    const pct = parseFloat(loaderBar.style.width) || 0;
+    if (pct >= 75 && !finalShown) {
+      finalShown = true;
+      showMessage(FINAL_MSG);
+    } else if (!finalShown) {
+      showMessage(shuffled[msgIndex % shuffled.length]);
+      msgIndex++;
+    }
+    msgTimer = setTimeout(cycleMessage, 2500);
+  }
+
+  function advanceStage() {
+    if (stageIndex >= STAGES.length) return;
+    const [pct, delay] = STAGES[stageIndex++];
+    loaderBar.style.width = pct + "%";
+    stageTimer = setTimeout(advanceStage, delay);
+  }
+
+  function cleanup() {
+    clearTimeout(msgTimer);
+    clearTimeout(stageTimer);
+    msgTimer = stageTimer = null;
+  }
+
+  return {
+    start() {
+      msgIndex = stageIndex = 0;
+      finalShown = false;
+      shuffled = shuffle(MESSAGES);
+
+      loaderWrap.hidden = false;
+      statusEl.textContent = "";
+      statusEl.style.color = "";
+
+      loaderBar.style.transition = "none";
+      loaderBar.style.width = "4%";
+      requestAnimationFrame(() => { loaderBar.style.transition = ""; });
+
+      showMessage(shuffled[0]);
+      msgIndex = 1;
+      msgTimer   = setTimeout(cycleMessage, 2500);
+      stageTimer = setTimeout(advanceStage, 800);
+    },
+
+    finish() {
+      cleanup();
+      showMessage("Done!");
+      loaderBar.style.transition = "width 400ms ease-out";
+      loaderBar.style.width = "100%";
+      setTimeout(() => {
+        loaderWrap.hidden = true;
+        loaderBar.style.width = "0%";
+        loaderBar.style.transition = "";
+      }, 600);
+    },
+
+    fail() {
+      cleanup();
+      loaderWrap.hidden = true;
+      loaderBar.style.width = "0%";
+    },
+  };
+})();
 
 // ── Status helpers ─────────────────────────────────────────────────────
 function setStatus(message, isGenerating = false, isError = false) {
