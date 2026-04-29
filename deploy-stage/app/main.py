@@ -1,9 +1,14 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from app.api.routes import activities
+
+logger = logging.getLogger("h5p_creator")
 
 app = FastAPI(
     title="H5P Creator",
@@ -31,3 +36,17 @@ def index() -> FileResponse:
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+class FeedbackPayload(BaseModel):
+    name: str = ""
+    message: str = ""
+
+
+@app.post("/feedback", include_in_schema=False)
+async def submit_feedback(payload: FeedbackPayload) -> dict:
+    name = payload.name.strip() or "Anonymous"
+    message = payload.message.strip()
+    if message:
+        logger.info("[FEEDBACK] from=%r  message=%r", name, message)
+    return {"ok": True}
