@@ -552,6 +552,19 @@ button:disabled {
   opacity: 0.4;
 }
 
+/* ── Animated ellipsis ──────────────────────────────────────────────── */
+
+@keyframes ellipsis {
+  0%   { content: ".";   }
+  33%  { content: "..";  }
+  66%  { content: "..."; }
+}
+
+.ellipsis::after {
+  content: ".";
+  animation: ellipsis 1.2s steps(1, end) infinite;
+}
+
 /* ── Utility ────────────────────────────────────────────────────────── */
 
 .hidden {

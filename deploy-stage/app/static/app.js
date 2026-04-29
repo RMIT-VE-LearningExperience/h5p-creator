@@ -108,17 +108,17 @@ generateButton.addEventListener("click", async () => {
   const files = [...fileInput.files];
 
   if (inputMode === "upload" && !files.length) {
-    setStatus("Upload at least one document first.", true); return;
+    setStatus("Upload at least one document first.", false, true); return;
   }
   if (inputMode === "paste" && !pasteContent.value.trim()) {
-    setStatus("Paste some content first.", true); return;
+    setStatus("Paste some content first.", false, true); return;
   }
 
   const expandedTypes = getExpandedTypes();
-  if (!expandedTypes.length) { setStatus("Set at least one activity type above 0.", true); return; }
+  if (!expandedTypes.length) { setStatus("Set at least one activity type above 0.", false, true); return; }
 
   const total = expandedTypes.length;
-  setStatus(`Generating ${total} activit${total === 1 ? "y" : "ies"}…`);
+  setStatus(`Generating ${total} activit${total === 1 ? "y" : "ies"}`, true);
   generateButton.disabled = true;
 
   const mix = getTypeMix();
@@ -196,7 +196,7 @@ async function runBatchGenerate(files, types) {
       error_type:    isTimeout ? "timeout" : "server_error",
       error_message: msg.slice(0, 100),
     });
-    setStatus(msg, true);
+    setStatus(msg, false, true);
   }
 }
 
@@ -441,9 +441,14 @@ function parseAsteriskSyntax(escapedText, tokenClass) {
 }
 
 // ── Status helpers ─────────────────────────────────────────────────────
-function setStatus(message, isError = false) {
-  statusEl.textContent = message;
-  statusEl.style.color = isError ? "#b42318" : "";
+function setStatus(message, isGenerating = false, isError = false) {
+  if (isGenerating) {
+    statusEl.innerHTML = `${escapeHtml(message)}<span class="ellipsis"></span>`;
+    statusEl.style.color = "";
+  } else {
+    statusEl.textContent = message;
+    statusEl.style.color = isError ? "#b42318" : "";
+  }
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────
