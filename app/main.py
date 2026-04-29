@@ -43,6 +43,11 @@ class FeedbackPayload(BaseModel):
     message: str = ""
 
 
+@app.get("/feedback", include_in_schema=False)
+def feedback_page() -> FileResponse:
+    return FileResponse("app/static/index.html")
+
+
 @app.post("/feedback", include_in_schema=False)
 async def submit_feedback(payload: FeedbackPayload) -> dict:
     name = payload.name.strip() or "Anonymous"

@@ -528,6 +528,12 @@ feedbackToggle.addEventListener("click", () => {
   }
 });
 
+if (window.location.pathname === "/feedback") {
+  feedbackPanel.hidden = false;
+  feedbackToggle.classList.add("active");
+  feedbackText.focus();
+}
+
 // Close panel when clicking outside
 document.addEventListener("click", (e) => {
   if (!feedbackPanel.hidden &&
