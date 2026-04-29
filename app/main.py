@@ -48,5 +48,5 @@ async def submit_feedback(payload: FeedbackPayload) -> dict:
     name = payload.name.strip() or "Anonymous"
     message = payload.message.strip()
     if message:
-        logger.info("[FEEDBACK] from=%r  message=%r", name, message)
+        print(f"[FEEDBACK] from={name!r}  message={message!r}", flush=True)
     return {"ok": True}
