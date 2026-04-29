@@ -603,7 +603,7 @@ extra keys. The object must have exactly these three top-level keys:
 
 {
   "content_type": "H5P.QuestionSet",
-  "title": "Human-readable activity title",
+  "title": "Human-readable activity title (never use the word 'Assessment')",
   "content": { ... complete H5P content JSON as shown above ... }
 }
 
