@@ -180,7 +180,7 @@ async function runBatchGenerate(files, types) {
   data.append("content_mode",    getContentMode());
   data.append("count_per_type",  "1");
   data.append("paragraph_count", paraCountInput.value || "4");
-  data.append("ai_provider",     "openai");
+  data.append("ai_provider",     "val");
 
   // Abort if the server hasn't responded within 4 minutes
   const controller = new AbortController();

@@ -653,8 +653,8 @@ def process_document(
         learner_context=learner_context,
     )
 
-    if provider == "openai":
-        result = _process_with_openai(user_content, model_override)
+    if provider in ("openai", "val"):
+        result = _process_with_openai(user_content, model_override, use_val=provider == "val")
         return _validate_or_retry(
             result=result,
             provider=provider,
@@ -682,17 +682,22 @@ def process_document(
     raise ValueError("Unsupported AI provider")
 
 
-def _process_with_openai(user_content: str, model_override: str | None) -> ProcessorResult:
-    if not settings.openai_api_key:
-        raise ValueError("OPENAI_API_KEY is not configured")
-
+def _process_with_openai(user_content: str, model_override: str | None, use_val: bool = False) -> ProcessorResult:
     try:
         from openai import OpenAI
     except ImportError as exc:
         raise ValueError("OpenAI SDK is not installed. Install dependencies again.") from exc
 
-    model_name = model_override or settings.openai_model
-    client = OpenAI(api_key=settings.openai_api_key)
+    if use_val:
+        if not settings.val_api_key:
+            raise ValueError("VAL_API_KEY is not configured")
+        model_name = model_override or settings.val_model
+        client = OpenAI(api_key=settings.val_api_key, base_url=settings.val_base_url)
+    else:
+        if not settings.openai_api_key:
+            raise ValueError("OPENAI_API_KEY is not configured")
+        model_name = model_override or settings.openai_model
+        client = OpenAI(api_key=settings.openai_api_key)
 
     response = client.chat.completions.create(
         model=model_name,
@@ -932,8 +937,8 @@ def _validate_or_retry(
         learner_context=learner_context,
     )
 
-    if provider == "openai":
-        retry_result = _process_with_openai(retry_user_content, model_override)
+    if provider in ("openai", "val"):
+        retry_result = _process_with_openai(retry_user_content, model_override, use_val=provider == "val")
     elif provider == "anthropic":
         retry_result = _process_with_anthropic(retry_user_content, model_override)
     else:
