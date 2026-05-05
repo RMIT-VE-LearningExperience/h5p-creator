@@ -98,6 +98,18 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/info", include_in_schema=False)
+def info() -> dict:
+    from app.core.config import settings
+    if settings.val_api_key:
+        return {"ai_provider": "val", "model": settings.val_model}
+    if settings.openai_api_key:
+        return {"ai_provider": "openai", "model": settings.openai_model}
+    if settings.anthropic_api_key:
+        return {"ai_provider": "anthropic", "model": settings.anthropic_model}
+    return {"ai_provider": "unknown", "model": ""}
+
+
 class FeedbackPayload(BaseModel):
     name: str = ""
     message: str = ""

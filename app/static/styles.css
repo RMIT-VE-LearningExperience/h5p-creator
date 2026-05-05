@@ -594,6 +594,25 @@ button:disabled {
   opacity: 0.4;
 }
 
+.footer-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+
+.footer-ai-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.footer-ai-dot.val     { background: #00843d; }
+.footer-ai-dot.openai  { background: #10a37f; }
+.footer-ai-dot.anthropic { background: #d4691a; }
+
 /* ── Animated ellipsis ──────────────────────────────────────────────── */
 
 @keyframes ellipsis {

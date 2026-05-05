@@ -706,3 +706,20 @@ feedbackSubmit.addEventListener("click", async () => {
     feedbackSubmit.textContent  = "Send feedback";
   }, 2500);
 });
+
+// ── Footer AI indicator ────────────────────────────────────────────────
+(async () => {
+  const el = document.getElementById("footer-ai");
+  if (!el) return;
+  try {
+    const res  = await fetch("/info");
+    const data = await res.json();
+    const labels = {
+      val:       "VAL · OpenAI",
+      openai:    "OpenAI",
+      anthropic: "Claude (Anthropic)",
+    };
+    const label = labels[data.ai_provider] || data.ai_provider;
+    el.innerHTML = `<span class="footer-ai-dot ${data.ai_provider}"></span>${label}`;
+  } catch { /* silent */ }
+})();
