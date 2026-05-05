@@ -95,7 +95,7 @@ async def generate_activity(
     pass_percentage: int = Form(default=100),
     paragraph_count: int = Form(default=4),
 ) -> GenerateResponse:
-    if ai_provider not in {"openai", "anthropic"}:
+    if ai_provider not in {"openai", "anthropic", "val"}:
         raise HTTPException(status_code=400, detail="Unsupported AI provider")
     if activity_type not in _ALLOWED_ACTIVITY_TYPES:
         raise HTTPException(status_code=400, detail="Unsupported activity type")
@@ -172,7 +172,7 @@ async def generate_batch(
         raise HTTPException(status_code=400, detail=f"Unsupported activity types: {invalid}")
     if not files and not text_content.strip():
         raise HTTPException(status_code=400, detail="Provide at least one file or paste some content")
-    if ai_provider not in {"openai", "anthropic"}:
+    if ai_provider not in {"openai", "anthropic", "val"}:
         raise HTTPException(status_code=400, detail="Unsupported AI provider")
     if not 0 < pass_percentage <= 100:
         raise HTTPException(status_code=400, detail="Pass percentage must be between 1 and 100")
