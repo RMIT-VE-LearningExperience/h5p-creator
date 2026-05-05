@@ -699,14 +699,20 @@ def _process_with_openai(user_content: str, model_override: str | None, use_val:
         model_name = model_override or settings.openai_model
         client = OpenAI(api_key=settings.openai_api_key)
 
-    response = client.chat.completions.create(
-        model=model_name,
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": _H5P_SYSTEM_PROMPT},
-            {"role": "user", "content": user_content},
-        ],
-    )
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": _H5P_SYSTEM_PROMPT},
+                {"role": "user", "content": user_content},
+            ],
+        )
+    except Exception as exc:
+        msg = str(exc)
+        if use_val and any(x in msg for x in ("403", "Forbidden", "forbidden", "blocked", "unavailable")):
+            raise ValueError("VAL_NETWORK_ERROR") from exc
+        raise
 
     raw_json = _strip_markdown_fences((response.choices[0].message.content or "").strip())
     if not raw_json:

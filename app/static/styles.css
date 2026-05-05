@@ -658,6 +658,38 @@ button:disabled {
 
 .loader-message.fading { opacity: 0; }
 
+/* ── VPN error notice ───────────────────────────────────────────────── */
+
+.vpn-error {
+  background: #fff7ed;
+  border: 1.5px solid #f97316;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.vpn-error-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.vpn-error-body strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #c2410c;
+  margin-bottom: 4px;
+}
+
+.vpn-error-body p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #7c2d12;
+  line-height: 1.5;
+}
+
 /* ── Utility ────────────────────────────────────────────────────────── */
 
 .hidden {

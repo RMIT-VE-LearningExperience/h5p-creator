@@ -577,6 +577,17 @@ function setStatus(message, isGenerating = false, isError = false) {
   if (isGenerating) {
     statusEl.innerHTML = `${escapeHtml(message)}<span class="ellipsis"></span>`;
     statusEl.style.color = "";
+  } else if (isError && message === "VAL_NETWORK_ERROR") {
+    statusEl.style.color = "";
+    statusEl.innerHTML = `
+      <div class="vpn-error">
+        <span class="vpn-error-icon">🔒</span>
+        <div class="vpn-error-body">
+          <strong>RMIT network required</strong>
+          <p>The VAL API is only accessible on campus or via the RMIT VPN.<br>
+             Connect to the VPN and try again.</p>
+        </div>
+      </div>`;
   } else {
     statusEl.textContent = message;
     statusEl.style.color = isError ? "#b42318" : "";

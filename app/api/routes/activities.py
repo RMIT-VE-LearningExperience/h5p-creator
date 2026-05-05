@@ -250,6 +250,8 @@ async def generate_batch(
             *[_run_one(t, d) for t, d in jobs]
         )
     except Exception as exc:
+        if "VAL_NETWORK_ERROR" in str(exc):
+            raise HTTPException(status_code=503, detail="VAL_NETWORK_ERROR") from exc
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     # Pack and assemble results
