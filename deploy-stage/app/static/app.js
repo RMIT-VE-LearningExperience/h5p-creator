@@ -207,7 +207,8 @@ async function runBatchGenerate(files, types) {
       dbg("Error payload", payload);
       throw new Error(extractErrorMessage(payload, "Generation failed"));
     }
-    dbg("Success", { count: (payload.results || []).length, titles: (payload.results || []).map(r => r.title) });
+    const providers = [...new Set((payload.results || []).map(r => `${r.ai_provider} / ${r.ai_model}`))];
+    dbg("Success", { count: (payload.results || []).length, ai_used: providers, titles: (payload.results || []).map(r => r.title) });
     GenerationLoader.finish();
     renderResults(payload);
     const resultTypes = (payload.results || []).map(r => r.activity_type);
