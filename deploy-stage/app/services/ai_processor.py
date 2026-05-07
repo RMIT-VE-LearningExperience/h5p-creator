@@ -619,7 +619,7 @@ extra keys. The object must have exactly these three top-level keys:
 
 {
   "content_type": "H5P.QuestionSet",
-  "title": "Human-readable activity title (never use the word 'Assessment')",
+  "title": "Descriptive activity title — never use the word 'Assessment', never start with a number or section prefix like '1.' or '3.2', and never use generic words like 'Introduction' or 'Overview' alone. Derive a specific, content-driven title from the subject matter (e.g. 'Chemical Spill Response Procedures' not '5. Spills').",
   "content": { ... complete H5P content JSON as shown above ... }
 }
 
