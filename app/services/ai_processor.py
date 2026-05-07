@@ -559,6 +559,13 @@ Unmarked paragraphs are explanatory context, not questions.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONVERSION RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL: Use ONLY the content from the provided document. NEVER invent
+placeholder text, generic filler, or example sentences such as "This is a
+sample activity", "Since no content was provided", "placeholder", or any
+fabricated educational content. If the document content is insufficient to
+produce a meaningful activity, return whatever the document does contain —
+do not substitute invented text.
+
 1. H1 heading → document title
 2. H2/H3 headings → section breaks / question categories / slide titles
 3. Each QUESTION: block → one question entry in the questions array (QuestionSet)
