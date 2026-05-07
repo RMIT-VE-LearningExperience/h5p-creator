@@ -473,25 +473,7 @@ function parseAsteriskSyntax(escapedText, tokenClass) {
   });
 }
 
-// ── Debug log ──────────────────────────────────────────────────────────
-const debugPanel  = document.getElementById("debug-panel");
-const debugLog    = document.getElementById("debug-log");
-const debugToggle = document.getElementById("debug-toggle");
-const debugClear  = document.getElementById("debug-clear");
-
-debugToggle.addEventListener("click", () => { debugPanel.hidden = !debugPanel.hidden; });
-debugClear.addEventListener("click",  () => { debugLog.textContent = ""; });
-
-function dbg(label, data) {
-  const ts = new Date().toISOString().slice(11, 23);
-  let line = `[${ts}] ${label}`;
-  if (data !== undefined) {
-    try { line += "\n" + JSON.stringify(data, null, 2); }
-    catch { line += "\n" + String(data); }
-  }
-  debugLog.textContent += line + "\n\n";
-  debugLog.scrollTop = debugLog.scrollHeight;
-}
+function dbg() {}
 
 // ── Generation loader ──────────────────────────────────────────────────
 const GenerationLoader = (() => {
