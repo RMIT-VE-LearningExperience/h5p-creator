@@ -575,6 +575,11 @@ do not substitute invented text.
 6. If no [CORRECT] items exist in a block, mark only the first option correct
 7. Maximum 4 answer options per question. If more exist, keep all [CORRECT]
    answers and select the best distractors to reach a total of 4.
+7b. Every MultiChoice question MUST contain at least one answer with
+   "correct": false. If the source material only provides correct
+   statements, invent 1–2 plausible but clearly wrong distractors so
+   the learner must discriminate. NEVER produce a question where every
+   option is correct.
 8. Each question's metadata.title must be the question text with HTML tags
    removed, truncated to 60 characters at a word boundary. Never use
    "Untitled Multiple Choice" or any generic placeholder.
