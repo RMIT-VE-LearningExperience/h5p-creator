@@ -583,6 +583,10 @@ do not substitute invented text.
 8. Each question's metadata.title must be the question text with HTML tags
    removed, truncated to 60 characters at a word boundary. Never use
    "Untitled Multiple Choice" or any generic placeholder.
+8b. Strip section number prefixes from question text and titles. Do not
+   begin a question with patterns like "3.1", "4.2 General Storage Rules:",
+   "Section 2:" or similar numbering. The question should start directly
+   with the interrogative ("Which...", "What...", "How...", etc.).
 9. All text must be wrapped in HTML tags: <p>, <h2>, <ul><li>, etc.
 10. Replace every <uuid-v4> placeholder with a real UUID v4 string
 11. passPercentage should use the value provided by the caller
