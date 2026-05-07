@@ -391,7 +391,7 @@ function buildDragTextPreview(fields) {
   return `
     ${instructions ? `<p class="muted preview-hint">${escapeHtml(instructions)}</p>` : ""}
     <p class="preview-cloze-text">${rendered}</p>
-    <p class="muted preview-hint" style="margin-top:10px">Teal chips are the draggable words learners must place into blanks.</p>
+    <p class="muted preview-hint" style="margin-top:10px">Blue tokens are the draggable words learners must place into blanks.</p>
   `;
 }
 
@@ -403,7 +403,7 @@ function buildBlanksPreview(fields) {
   return `
     ${instructions ? `<p class="muted preview-hint">${escapeHtml(instructions)}</p>` : ""}
     <p class="preview-cloze-text">${rendered}</p>
-    <p class="muted preview-hint" style="margin-top:10px">Amber tokens are the words learners must type into blanks.</p>
+    <p class="muted preview-hint" style="margin-top:10px">Red tokens are the words learners must type into blanks.</p>
   `;
 }
 
