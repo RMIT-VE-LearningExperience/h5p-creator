@@ -1,3 +1,11 @@
+// ── API base URL ───────────────────────────────────────────────────────
+// Firebase Hosting has a hard 60s timeout for Cloud Run rewrites.
+// Long-running generate calls bypass Firebase and hit Cloud Run directly.
+const CLOUD_RUN_URL = "https://h5p-creator-155926758497.us-central1.run.app";
+const API_BASE = (window.location.hostname.includes("web.app") ||
+                  window.location.hostname.includes("firebaseapp.com"))
+  ? CLOUD_RUN_URL : "";
+
 // ── DOM refs ───────────────────────────────────────────────────────────
 const fileInput        = document.getElementById("file-input");
 const fileLabel        = document.getElementById("file-label");
@@ -195,7 +203,7 @@ async function runBatchGenerate(files, types) {
   });
 
   try {
-    const response = await fetch("/activities/generate_batch", {
+    const response = await fetch(`${API_BASE}/activities/generate_batch`, {
       method: "POST",
       body: data,
       signal: controller.signal,
@@ -740,7 +748,7 @@ let activeAiProvider = "openai"; // fallback until /info resolves
   const el = document.getElementById("footer-ai");
   if (!el) return;
   try {
-    const res  = await fetch("/info");
+    const res  = await fetch(`${API_BASE}/info`);
     const data = await res.json();
     activeAiProvider = data.ai_provider || "openai";
     const labels = {
