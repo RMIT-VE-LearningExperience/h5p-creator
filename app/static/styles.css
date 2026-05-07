@@ -690,6 +690,83 @@ button:disabled {
   line-height: 1.5;
 }
 
+/* ── Debug panel ────────────────────────────────────────────────────── */
+
+.debug-toggle {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  background: #1e1e1e;
+  color: #ccc;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  z-index: 8000;
+  opacity: 0.7;
+}
+
+.debug-toggle:hover { opacity: 1; background: #1e1e1e; transform: none; }
+
+.debug-panel {
+  position: fixed;
+  bottom: 50px;
+  left: 16px;
+  width: min(540px, calc(100vw - 32px));
+  max-height: 320px;
+  background: #1e1e1e;
+  border-radius: 10px;
+  border: 1px solid #333;
+  z-index: 8000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.debug-panel[hidden] { display: none; }
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #333;
+}
+
+.debug-clear {
+  background: none;
+  border: 1px solid #444;
+  color: #888;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.debug-clear:hover { color: #ccc; border-color: #666; background: none; transform: none; }
+
+.debug-log {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: #d4d4d4;
+  overflow-y: auto;
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
 /* ── Utility ────────────────────────────────────────────────────────── */
 
 .hidden {

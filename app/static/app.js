@@ -180,11 +180,19 @@ async function runBatchGenerate(files, types) {
   data.append("content_mode",    getContentMode());
   data.append("count_per_type",  "1");
   data.append("paragraph_count", paraCountInput.value || "4");
-  data.append("ai_provider",     "val");
+  data.append("ai_provider",     activeAiProvider);
 
   // Abort if the server hasn't responded within 4 minutes
   const controller = new AbortController();
   const timeoutId  = setTimeout(() => controller.abort(), 4 * 60 * 1000);
+
+  dbg("→ POST /activities/generate_batch", {
+    ai_provider: data.get("ai_provider"),
+    activity_types: data.get("activity_types"),
+    content_mode: data.get("content_mode"),
+    subject_area: data.get("subject_area") || "(none)",
+    files: [...(inputMode === "upload" ? fileInput.files : [])].map(f => f.name),
+  });
 
   try {
     const response = await fetch("/activities/generate_batch", {
@@ -193,9 +201,13 @@ async function runBatchGenerate(files, types) {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
+    dbg(`← HTTP ${response.status} ${response.statusText}`);
     const payload = await readResponsePayload(response);
-    if (!response.ok) throw new Error(extractErrorMessage(payload, "Generation failed"));
-
+    if (!response.ok) {
+      dbg("Error payload", payload);
+      throw new Error(extractErrorMessage(payload, "Generation failed"));
+    }
+    dbg("Success", { count: (payload.results || []).length, titles: (payload.results || []).map(r => r.title) });
     GenerationLoader.finish();
     renderResults(payload);
     const resultTypes = (payload.results || []).map(r => r.activity_type);
@@ -214,6 +226,7 @@ async function runBatchGenerate(files, types) {
       error_type:    isTimeout ? "timeout" : "server_error",
       error_message: msg.slice(0, 100),
     });
+    dbg("Exception", { name: err.name, message: err.message });
     GenerationLoader.fail();
     setStatus(msg, false, true);
   }
@@ -457,6 +470,26 @@ function parseAsteriskSyntax(escapedText, tokenClass) {
     const word = inner.split(/[/:]/)[0].trim();
     return `<span class="${tokenClass}">${word}</span>`;
   });
+}
+
+// ── Debug log ──────────────────────────────────────────────────────────
+const debugPanel  = document.getElementById("debug-panel");
+const debugLog    = document.getElementById("debug-log");
+const debugToggle = document.getElementById("debug-toggle");
+const debugClear  = document.getElementById("debug-clear");
+
+debugToggle.addEventListener("click", () => { debugPanel.hidden = !debugPanel.hidden; });
+debugClear.addEventListener("click",  () => { debugLog.textContent = ""; });
+
+function dbg(label, data) {
+  const ts = new Date().toISOString().slice(11, 23);
+  let line = `[${ts}] ${label}`;
+  if (data !== undefined) {
+    try { line += "\n" + JSON.stringify(data, null, 2); }
+    catch { line += "\n" + String(data); }
+  }
+  debugLog.textContent += line + "\n\n";
+  debugLog.scrollTop = debugLog.scrollHeight;
 }
 
 // ── Generation loader ──────────────────────────────────────────────────
@@ -718,13 +751,15 @@ feedbackSubmit.addEventListener("click", async () => {
   }, 2500);
 });
 
-// ── Footer AI indicator ────────────────────────────────────────────────
+// ── Footer AI indicator + active provider ─────────────────────────────
+let activeAiProvider = "openai"; // fallback until /info resolves
 (async () => {
   const el = document.getElementById("footer-ai");
   if (!el) return;
   try {
     const res  = await fetch("/info");
     const data = await res.json();
+    activeAiProvider = data.ai_provider || "openai";
     const labels = {
       val:       "VAL · OpenAI",
       openai:    "OpenAI",

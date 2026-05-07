@@ -712,6 +712,10 @@ def _process_with_openai(user_content: str, model_override: str | None, use_val:
         msg = str(exc)
         if use_val and any(x in msg for x in ("403", "Forbidden", "forbidden", "blocked", "unavailable")):
             raise ValueError("VAL_NETWORK_ERROR") from exc
+        if use_val and ("401" in msg or "session has expired" in msg or "token is invalid" in msg):
+            # VAL key rejected — fall back to OpenAI if available
+            print(f"[VAL] Auth failed ({msg[:120]}), falling back to OpenAI", flush=True)
+            return _process_with_openai(user_content, model_override, use_val=False)
         raise
 
     raw_json = _strip_markdown_fences((response.choices[0].message.content or "").strip())

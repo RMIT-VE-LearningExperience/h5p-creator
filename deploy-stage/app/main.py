@@ -183,6 +183,41 @@ def feedback_page() -> HTMLResponse:
     return HTMLResponse(html)
 
 
+@app.get("/test-val", include_in_schema=False)
+async def test_val() -> dict:
+    """Diagnostic: raw HTTP call to VAL API to debug auth issues."""
+    import httpx
+    from app.core.config import settings
+
+    if not settings.val_api_key:
+        return {"error": "VAL_API_KEY not configured"}
+
+    url = f"{settings.val_base_url.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {settings.val_api_key}",
+        "Content-Type": "application/json",
+    }
+    body = {
+        "model": settings.val_model,
+        "messages": [{"role": "user", "content": "Say 'ok' and nothing else."}],
+        "max_tokens": 5,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(url, headers=headers, json=body)
+        return {
+            "url": url,
+            "key_prefix": settings.val_api_key[:12] + "...",
+            "model": settings.val_model,
+            "status": resp.status_code,
+            "response_headers": dict(resp.headers),
+            "body": resp.text[:2000],
+        }
+    except Exception as exc:
+        return {"url": url, "error": str(exc)}
+
+
 @app.post("/feedback", include_in_schema=False)
 async def submit_feedback(payload: FeedbackPayload) -> dict:
     name = payload.name.strip() or "Anonymous"
