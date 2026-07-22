@@ -1,4 +1,4 @@
-"""Convert parsed Word document content into H5P JSON using OpenAI or Anthropic."""
+"""Convert parsed document content into H5P JSON using the VAL API."""
 from __future__ import annotations
 import re
 from dataclasses import dataclass
@@ -656,6 +656,7 @@ def process_document(
     paragraph_count: int = 4,
     model_override: str | None = None,
     subject_area: str = "",
+    training_context: str = "",
     learner_context: str = "",
 ) -> ProcessorResult:
     provider = ai_provider.lower().strip()
@@ -666,54 +667,36 @@ def process_document(
         paragraph_count=paragraph_count,
         force_requested_type=activity_type != "auto",
         subject_area=subject_area,
+        training_context=training_context,
         learner_context=learner_context,
     )
 
-    if provider in ("openai", "val"):
-        result = _process_with_openai(user_content, model_override, use_val=provider == "val")
-        return _validate_or_retry(
-            result=result,
-            provider=provider,
-            doc=doc,
-            activity_type=activity_type,
-            pass_percentage=pass_percentage,
-            paragraph_count=paragraph_count,
-            model_override=model_override,
-            subject_area=subject_area,
-            learner_context=learner_context,
-        )
-    if provider == "anthropic":
-        result = _process_with_anthropic(user_content, model_override)
-        return _validate_or_retry(
-            result=result,
-            provider=provider,
-            doc=doc,
-            activity_type=activity_type,
-            pass_percentage=pass_percentage,
-            paragraph_count=paragraph_count,
-            model_override=model_override,
-            subject_area=subject_area,
-            learner_context=learner_context,
-        )
-    raise ValueError("Unsupported AI provider")
+    if provider != "val":
+        raise ValueError("Unsupported AI provider")
+    result = _process_with_val(user_content, model_override)
+    return _validate_or_retry(
+        result=result,
+        doc=doc,
+        activity_type=activity_type,
+        pass_percentage=pass_percentage,
+        paragraph_count=paragraph_count,
+        model_override=model_override,
+        subject_area=subject_area,
+        training_context=training_context,
+        learner_context=learner_context,
+    )
 
 
-def _process_with_openai(user_content: str, model_override: str | None, use_val: bool = False) -> ProcessorResult:
+def _process_with_val(user_content: str, model_override: str | None) -> ProcessorResult:
     try:
         from openai import OpenAI
     except ImportError as exc:
-        raise ValueError("OpenAI SDK is not installed. Install dependencies again.") from exc
+        raise ValueError("OpenAI SDK is not installed.") from exc
 
-    if use_val:
-        if not settings.val_api_key:
-            raise ValueError("VAL_API_KEY is not configured")
-        model_name = model_override or settings.val_model
-        client = OpenAI(api_key=settings.val_api_key, base_url=settings.val_base_url)
-    else:
-        if not settings.openai_api_key:
-            raise ValueError("OPENAI_API_KEY is not configured")
-        model_name = model_override or settings.openai_model
-        client = OpenAI(api_key=settings.openai_api_key)
+    if not settings.val_api_key:
+        raise ValueError("VAL_API_KEY is not configured")
+    model_name = model_override or settings.val_model
+    client = OpenAI(api_key=settings.val_api_key, base_url=settings.val_base_url)
 
     try:
         response = client.chat.completions.create(
@@ -726,73 +709,24 @@ def _process_with_openai(user_content: str, model_override: str | None, use_val:
         )
     except Exception as exc:
         msg = str(exc)
-        if use_val and any(x in msg for x in ("403", "Forbidden", "forbidden", "blocked", "unavailable")):
+        if any(x in msg for x in ("403", "Forbidden", "forbidden", "blocked", "unavailable")):
             raise ValueError("VAL_NETWORK_ERROR") from exc
-        if use_val and ("401" in msg or "session has expired" in msg or "token is invalid" in msg):
-            # VAL key rejected — fall back to OpenAI if available
-            print(f"[VAL] Auth failed ({msg[:120]}), falling back to OpenAI", flush=True)
-            return _process_with_openai(user_content, model_override, use_val=False)
         raise
 
     raw_json = _strip_markdown_fences((response.choices[0].message.content or "").strip())
     if not raw_json:
-        raise ValueError("OpenAI returned no text output")
+        raise ValueError("VAL returned no text output")
     h5p_result = _clean_sort_paragraphs(H5PResult.model_validate_json(raw_json))
 
     usage = getattr(response, "usage", None)
     return ProcessorResult(
         h5p=h5p_result,
-        ai_provider="openai",
+        ai_provider="val",
         model_used=model_name,
         cache_read_tokens=0,
         cache_write_tokens=0,
         input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
         output_tokens=getattr(usage, "completion_tokens", 0) or 0,
-    )
-
-
-def _process_with_anthropic(user_content: str, model_override: str | None) -> ProcessorResult:
-    if not settings.anthropic_api_key:
-        raise ValueError("ANTHROPIC_API_KEY is not configured")
-
-    try:
-        import anthropic
-    except ImportError as exc:
-        raise ValueError("Anthropic SDK is not installed. Install dependencies again.") from exc
-
-    model_name = model_override or settings.anthropic_model
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-
-    with client.messages.stream(
-        model=model_name,
-        max_tokens=16000,
-        system=[
-            {
-                "type": "text",
-                "text": _H5P_SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{"role": "user", "content": user_content}],
-    ) as stream:
-        final = stream.get_final_message()
-
-    text_block = next((block for block in final.content if block.type == "text"), None)
-    if text_block is None:
-        raise ValueError("Anthropic returned no text content")
-
-    raw_json = _strip_markdown_fences(text_block.text.strip())
-    h5p_result = _clean_sort_paragraphs(H5PResult.model_validate_json(raw_json))
-    usage = final.usage
-
-    return ProcessorResult(
-        h5p=h5p_result,
-        ai_provider="anthropic",
-        model_used=model_name,
-        cache_read_tokens=getattr(usage, "cache_read_input_tokens", 0) or 0,
-        cache_write_tokens=getattr(usage, "cache_creation_input_tokens", 0) or 0,
-        input_tokens=getattr(usage, "input_tokens", 0) or 0,
-        output_tokens=getattr(usage, "output_tokens", 0) or 0,
     )
 
 
@@ -803,6 +737,7 @@ def _build_user_message(
     paragraph_count: int = 4,
     force_requested_type: bool = False,
     subject_area: str = "",
+    training_context: str = "",
     learner_context: str = "",
 ) -> str:
     lines: list[str] = [
@@ -811,11 +746,18 @@ def _build_user_message(
         "",
     ]
 
-    if subject_area or learner_context:
+    if subject_area or training_context or learner_context:
         lines.append("## Activity context")
         if subject_area:
             lines.append(f"- Subject area / unit code: {subject_area}")
             lines.append(f"  The activity title MUST begin with '{subject_area} —'")
+        if training_context:
+            lines.extend([
+                "",
+                "## training.gov.au context",
+                "Use this official training product context to align terminology, competencies, and unit selection.",
+                training_context,
+            ])
         if learner_context:
             lines.append(f"- Learner context: {learner_context}")
         lines.append("")
@@ -941,13 +883,13 @@ def _validate_requested_type(result: ProcessorResult, activity_type: str) -> Pro
 def _validate_or_retry(
     *,
     result: ProcessorResult,
-    provider: str,
     doc: ParsedDocument,
     activity_type: str,
     pass_percentage: int,
     paragraph_count: int,
     model_override: str | None,
     subject_area: str = "",
+    training_context: str = "",
     learner_context: str = "",
 ) -> ProcessorResult:
     if activity_type == "auto" or result.h5p.content_type == activity_type:
@@ -960,14 +902,8 @@ def _validate_or_retry(
         paragraph_count=paragraph_count,
         force_requested_type=True,
         subject_area=subject_area,
+        training_context=training_context,
         learner_context=learner_context,
     )
-
-    if provider in ("openai", "val"):
-        retry_result = _process_with_openai(retry_user_content, model_override, use_val=provider == "val")
-    elif provider == "anthropic":
-        retry_result = _process_with_anthropic(retry_user_content, model_override)
-    else:
-        raise ValueError("Unsupported AI provider")
-
+    retry_result = _process_with_val(retry_user_content, model_override)
     return _validate_requested_type(retry_result, activity_type)

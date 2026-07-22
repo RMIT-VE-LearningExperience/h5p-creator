@@ -1,18 +1,19 @@
 import json
 import logging
 import os
+import time
 from datetime import datetime, timezone
 from html import escape
 
 import gspread
-from fastapi import FastAPI
+from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from google.oauth2.service_account import Credentials
 from pydantic import BaseModel
 
-from app.api.routes import activities
+from app.api.routes import activities, canvas, powerpoints, youtube
 
 logger = logging.getLogger("h5p_creator")
 
@@ -70,6 +71,47 @@ def _load_feedback() -> list[dict]:
         return []
 
 
+_stats_total: int = 0
+_stats_last_sync: float = 0.0
+_STATS_TTL: float = 120.0  # resync from Sheets every 2 minutes
+
+
+def _sync_stats() -> int:
+    global _stats_total, _stats_last_sync
+    try:
+        gc = _get_gc()
+        sh = gc.open_by_key(SHEET_ID)
+        try:
+            ws = sh.worksheet("Stats")
+        except gspread.WorksheetNotFound:
+            return _stats_total
+        rows = ws.get_all_values()
+        _stats_total = sum(
+            int(r[1]) for r in rows[1:] if len(r) >= 2 and r[1].isdigit()
+        )
+        _stats_last_sync = time.monotonic()
+    except Exception as exc:
+        print(f"[STATS] sync failed: {exc}", flush=True)
+    return _stats_total
+
+
+def _write_stat(count: int) -> None:
+    global _stats_total
+    _stats_total += count
+    try:
+        gc = _get_gc()
+        sh = gc.open_by_key(SHEET_ID)
+        try:
+            ws = sh.worksheet("Stats")
+        except gspread.WorksheetNotFound:
+            ws = sh.add_worksheet(title="Stats", rows=10000, cols=2)
+            ws.append_row(["Timestamp", "Count"], value_input_option="RAW")
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        ws.append_row([ts, count], value_input_option="RAW")
+    except Exception as exc:
+        print(f"[STATS] write failed: {exc}", flush=True)
+
+
 app = FastAPI(
     title="H5P Creator",
     description="Convert Word documents into H5P activities for Canvas LMS",
@@ -86,9 +128,16 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(activities.router)
+app.include_router(canvas.router)
+app.include_router(powerpoints.router)
+app.include_router(youtube.router)
 
 
 @app.get("/", include_in_schema=False)
+@app.get("/h5p", include_in_schema=False)
+@app.get("/canvas", include_in_schema=False)
+@app.get("/powerpoint", include_in_schema=False)
+@app.get("/youtube", include_in_schema=False)
 def index() -> FileResponse:
     return FileResponse("app/static/index.html")
 
@@ -103,11 +152,25 @@ def info() -> dict:
     from app.core.config import settings
     if settings.val_api_key:
         return {"ai_provider": "val", "model": settings.val_model}
-    if settings.openai_api_key:
-        return {"ai_provider": "openai", "model": settings.openai_model}
-    if settings.anthropic_api_key:
-        return {"ai_provider": "anthropic", "model": settings.anthropic_model}
     return {"ai_provider": "unknown", "model": ""}
+
+
+@app.get("/stats", include_in_schema=False)
+def get_stats() -> dict:
+    if time.monotonic() - _stats_last_sync > _STATS_TTL:
+        _sync_stats()
+    return {"total_generated": _stats_total}
+
+
+class StatPayload(BaseModel):
+    count: int = 0
+
+
+@app.post("/stats/record", include_in_schema=False)
+async def record_stats(payload: StatPayload, background_tasks: BackgroundTasks) -> dict:
+    if payload.count > 0:
+        background_tasks.add_task(_write_stat, payload.count)
+    return {"ok": True}
 
 
 class FeedbackPayload(BaseModel):

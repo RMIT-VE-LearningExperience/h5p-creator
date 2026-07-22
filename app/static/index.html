@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>H5P Creator</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260507a">
+  <script>
+    (() => {
+      const pages = { "/": "h5p", "/h5p": "h5p", "/canvas": "canvas", "/powerpoint": "powerpoint", "/youtube": "youtube" };
+      document.documentElement.dataset.workspace = pages[window.location.pathname] || "h5p";
+    })();
+  </script>
+  <link rel="stylesheet" href="/static/styles.css?v=20260721-canvas-connect">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HEFSNZDXB9"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -14,24 +20,23 @@
   </script>
 </head>
 <body>
-  <div class="beta-border"></div>
-  <div class="beta-notch">BETA — DO NOT USE FOR PRODUCTION</div>
   <div class="topbar"></div>
   <header class="app-header">
     <p class="eyebrow">RMIT VE Learning Experience</p>
-    <h1 class="app-title">H5P Creator <span class="beta-badge">BETA</span></h1>
+    <h1 class="app-title"><span id="app-title-text">H5P Creator</span> <span class="beta-badge">BETA</span></h1>
   </header>
 
   <main class="shell">
 
-    <nav class="steps" aria-label="Progress">
-      <div class="step active" data-step="1"><span>1</span>Configure</div>
-      <div class="step-connector"></div>
-      <div class="step" data-step="2"><span>2</span>Results</div>
-    </nav>
+    <div id="h5p-workspace" class="workspace-tab">
+      <nav class="steps" aria-label="Progress">
+        <div class="step active" data-step="1"><span>1</span>Configure</div>
+        <div class="step-connector"></div>
+        <div class="step" data-step="2"><span>2</span>Results</div>
+      </nav>
 
-    <!-- ── Step 1: Configure ──────────────────────────────────────────── -->
-    <section class="panel step-panel" id="step-1">
+      <!-- ── Step 1: Configure ──────────────────────────────────────────── -->
+      <section class="panel step-panel" id="step-1">
       <div class="form-grid">
 
         <!-- Input mode toggle -->
@@ -60,6 +65,7 @@
           <label>
             <span>Subject area / unit code</span>
             <input id="subject-area" type="text" placeholder="e.g. CHCAGE007 or Aged Care">
+            <div id="training-lookup-card" class="training-lookup-card" hidden></div>
           </label>
           <label>
             <span>Learner context</span>
@@ -191,10 +197,10 @@
         </div>
 
       </div>
-    </section>
+      </section>
 
-    <!-- ── Step 2: Results ────────────────────────────────────────────── -->
-    <section class="panel step-panel" id="step-2" hidden>
+      <!-- ── Step 2: Results ────────────────────────────────────────────── -->
+      <section class="panel step-panel" id="step-2" hidden>
       <div class="step-header">
         <div>
           <p class="eyebrow">Generated Activities</p>
@@ -210,18 +216,359 @@
       </p>
 
       <p id="status-2" class="status" style="text-align:center;margin-top:12px"></p>
-    </section>
+      </section>
+    </div>
+
+    <div id="canvas-workspace" class="workspace-tab" hidden>
+      <section class="panel canvas-connection-panel" aria-labelledby="canvas-connection-title">
+        <div class="canvas-header">
+          <div>
+            <p class="eyebrow">Canvas connection</p>
+            <h2 id="canvas-connection-title" class="step-title">Connect your Canvas account</h2>
+          </div>
+          <span id="canvas-status-badge" class="badge canvas-badge">Not connected</span>
+        </div>
+        <p class="muted">Use a personal access token from your institution. The connection lasts only for this open page.</p>
+        <div class="canvas-credentials-form">
+          <label>
+            <span>Canvas institution URL</span>
+            <input id="canvas-base-url" type="url" inputmode="url" autocomplete="url" placeholder="https://your-institution.instructure.com" value="https://rmit.instructure.com">
+          </label>
+          <label>
+            <span>Canvas API token</span>
+            <span class="secret-input-wrap">
+              <input id="canvas-api-token" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your personal access token">
+              <button type="button" id="canvas-token-toggle" class="secret-toggle" aria-label="Show API token">Show</button>
+            </span>
+          </label>
+        </div>
+        <div class="canvas-connection-actions">
+          <button type="button" id="canvas-connect-button">Connect</button>
+          <button type="button" id="canvas-disconnect-button" class="secondary" hidden>Disconnect</button>
+        </div>
+        <p class="credential-note">Your token is kept in memory, sent only with Canvas requests, and is not saved by this app.</p>
+        <p id="canvas-connection-status" class="status" aria-live="polite"></p>
+      </section>
+
+      <div id="canvas-tools" class="canvas-tools" hidden>
+      <section class="panel canvas-panel" id="canvas-panel">
+        <div class="canvas-header">
+          <div>
+            <p class="eyebrow">Canvas Courses</p>
+            <h2 class="step-title">Course reader</h2>
+          </div>
+        </div>
+        <div class="canvas-search-row">
+          <label>
+            <span>Find a Canvas course</span>
+            <input id="canvas-search-input" type="text" placeholder="Search by course name, code, or Canvas ID">
+          </label>
+          <button type="button" id="canvas-search-button">Search</button>
+        </div>
+        <p id="canvas-status" class="status"></p>
+        <div id="canvas-search-results" class="canvas-search-results"></div>
+        <div id="canvas-course-detail" class="canvas-course-detail" hidden></div>
+      </section>
+
+      <section class="panel canvas-files-panel" id="canvas-files-panel">
+        <div class="canvas-header">
+          <div>
+            <p class="eyebrow">Course Files</p>
+            <h2 class="step-title">Readable documents</h2>
+          </div>
+          <span id="canvas-files-count" class="badge canvas-badge">0 files</span>
+        </div>
+        <div class="canvas-file-actions">
+          <button type="button" id="canvas-preview-files" class="secondary" disabled>Preview text</button>
+          <button type="button" id="canvas-ask-files" class="secondary" disabled>Ask VAL about selected files</button>
+          <label>
+            <span>H5P type</span>
+            <select id="canvas-file-activity-type">
+              <option value="H5P.QuestionSet">Quiz (Multiple Choice)</option>
+              <option value="H5P.MultiChoice">Multiple Choice</option>
+              <option value="H5P.TrueFalse">True / False</option>
+              <option value="H5P.DragText">Drag the Words</option>
+              <option value="H5P.Blanks">Fill in the Blanks</option>
+              <option value="H5P.GuessTheAnswer">Guess the Answer</option>
+              <option value="H5P.SortParagraphs">Sort the Paragraphs</option>
+              <option value="H5P.Summary">Summary</option>
+              <option value="H5P.CoursePresentation">Presentation</option>
+            </select>
+          </label>
+          <button type="button" id="canvas-generate-files" disabled>Generate H5P</button>
+        </div>
+        <p id="canvas-files-status" class="status">Read a course to list PDFs, PowerPoints, and Word documents.</p>
+        <div id="canvas-files-list" class="canvas-files-list"></div>
+        <div id="canvas-file-preview" class="canvas-file-preview" hidden></div>
+      </section>
+
+      <section class="panel canvas-pages-panel" id="canvas-pages-panel">
+        <div class="canvas-header">
+          <div>
+            <p class="eyebrow">Course Pages</p>
+            <h2 class="step-title">Page content</h2>
+          </div>
+          <span id="canvas-pages-count" class="badge canvas-badge">0 pages</span>
+        </div>
+        <div class="canvas-page-actions">
+          <button type="button" id="canvas-preview-pages" class="secondary" disabled>Preview page text</button>
+          <button type="button" id="canvas-suggest-videos" class="secondary" disabled>Suggest YouTube videos</button>
+          <button type="button" id="canvas-ask-pages" class="secondary" disabled>Ask VAL about selected pages</button>
+        </div>
+        <p id="canvas-pages-status" class="status">Read a course to select Canvas pages.</p>
+        <div id="canvas-pages-list" class="canvas-pages-list"></div>
+        <div id="canvas-page-preview" class="canvas-file-preview" hidden></div>
+      </section>
+
+      <section class="panel canvas-chat-panel" id="canvas-chat-panel">
+        <div class="canvas-header">
+          <div>
+            <p class="eyebrow">VAL Course Chat</p>
+            <h2 class="step-title">Ask about searched courses</h2>
+          </div>
+          <span id="canvas-chat-context" class="badge canvas-badge">0 courses</span>
+        </div>
+        <div id="canvas-chat-messages" class="canvas-chat-messages">
+          <p class="muted">Search for a Canvas course, then ask VAL about modules, assignments, sections, or course structure.</p>
+        </div>
+        <div class="canvas-chat-row">
+          <label>
+            <span>Question</span>
+            <textarea id="canvas-chat-input" rows="3" placeholder="e.g. Which assignments are published and when are they due?"></textarea>
+          </label>
+          <button type="button" id="canvas-chat-button">Ask VAL</button>
+        </div>
+        <p id="canvas-chat-status" class="status"></p>
+      </section>
+      </div>
+    </div>
+
+    <div id="powerpoint-workspace" class="workspace-tab" hidden>
+      <section class="panel powerpoint-panel" id="powerpoint-panel">
+        <div class="canvas-header">
+          <div>
+            <p class="eyebrow">VAL PowerPoint</p>
+            <h2 class="step-title">Condense a Canvas course</h2>
+          </div>
+          <span id="powerpoint-status-badge" class="badge canvas-badge">Ready</span>
+        </div>
+
+        <div class="powerpoint-form">
+          <label>
+            <span>Canvas course URL or ID</span>
+            <input id="powerpoint-course-url" type="text" placeholder="https://rmit.instructure.com/courses/158310/modules">
+          </label>
+
+          <div class="powerpoint-module-actions">
+            <button type="button" id="powerpoint-load-modules-button" class="secondary">Load modules</button>
+            <span id="powerpoint-module-count" class="muted">No modules loaded</span>
+          </div>
+          <div id="powerpoint-module-list" class="powerpoint-module-list" hidden></div>
+
+          <div class="powerpoint-options">
+            <label>
+              <span>Slides</span>
+              <input id="powerpoint-slide-count" type="number" min="4" max="40" value="12">
+            </label>
+            <label>
+              <span>Learner context</span>
+              <input id="powerpoint-audience" type="text" placeholder="e.g. Cert III learners, course induction">
+            </label>
+            <label class="checkbox-row">
+              <input id="powerpoint-include-images" type="checkbox" checked>
+              <span>Use available Canvas page images</span>
+            </label>
+          </div>
+
+          <button type="button" id="powerpoint-generate-button">Generate PowerPoint</button>
+        </div>
+
+        <div id="powerpoint-loader-wrap" class="loader-wrap" hidden>
+          <div class="loader-bar-track">
+            <div id="powerpoint-loader-bar" class="loader-bar"></div>
+          </div>
+          <p id="powerpoint-loader-message" class="loader-message" aria-live="polite"></p>
+        </div>
+
+        <p id="powerpoint-status" class="status"></p>
+        <div id="powerpoint-result" class="powerpoint-result" hidden></div>
+      </section>
+    </div>
+
+    <div id="youtube-workspace" class="workspace-tab" hidden>
+      <nav class="steps" id="youtube-steps" aria-label="Progress">
+        <div class="step active" id="youtube-step-pill-1"><span>1</span>Connect</div>
+        <div class="step-connector"></div>
+        <div class="step" id="youtube-step-pill-2"><span>2</span>Choose content</div>
+        <div class="step-connector"></div>
+        <div class="step" id="youtube-step-pill-3"><span>3</span>Review &amp; push</div>
+      </nav>
+
+      <section class="panel canvas-connection-panel" aria-labelledby="youtube-canvas-connection-title">
+        <div class="canvas-header">
+          <div>
+            <p class="eyebrow">Canvas source</p>
+            <h2 id="youtube-canvas-connection-title" class="step-title">Connect your Canvas account</h2>
+          </div>
+          <span id="youtube-canvas-status-badge" class="badge canvas-badge">Not connected</span>
+        </div>
+        <p class="muted">Connect to select a course, module, or page and find videos that match its content.</p>
+
+        <div id="youtube-connect-summary" class="yt-summary-row" hidden>
+          <p id="youtube-connect-summary-text" class="muted"></p>
+          <button type="button" id="youtube-connect-change-button" class="secondary">Change</button>
+        </div>
+
+        <div id="youtube-connect-form">
+          <div class="canvas-credentials-form">
+            <label>
+              <span>Canvas institution URL</span>
+              <input id="youtube-canvas-base-url" type="url" inputmode="url" autocomplete="url" placeholder="https://your-institution.instructure.com" value="https://rmit.instructure.com">
+            </label>
+            <label>
+              <span>Canvas API token</span>
+              <span class="secret-input-wrap">
+                <input id="youtube-canvas-api-token" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your personal access token">
+                <button type="button" id="youtube-canvas-token-toggle" class="secret-toggle" aria-label="Show API token">Show</button>
+              </span>
+            </label>
+          </div>
+          <div class="canvas-connection-actions">
+            <button type="button" id="youtube-canvas-connect-button">Connect</button>
+            <button type="button" id="youtube-canvas-disconnect-button" class="secondary" hidden>Disconnect</button>
+          </div>
+          <p class="credential-note">Your token is kept in memory, sent only with Canvas requests, and is not saved by this app.</p>
+          <p id="youtube-canvas-connection-status" class="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section id="youtube-canvas-tools" class="panel youtube-canvas-source" hidden>
+        <div>
+          <p class="eyebrow">2 · Choose content</p>
+          <h2 class="step-title">Find Canvas content</h2>
+        </div>
+
+        <div id="youtube-content-summary" class="yt-summary-row" hidden>
+          <p id="youtube-content-summary-text" class="muted"></p>
+          <button type="button" id="youtube-content-change-button" class="secondary">Change</button>
+        </div>
+
+        <div id="youtube-content-form">
+          <div class="canvas-search-row">
+            <label>
+              <span>Course name, code, URL, or ID</span>
+              <input id="youtube-canvas-course-search" type="text" placeholder="Search your visible Canvas courses">
+            </label>
+            <button type="button" id="youtube-canvas-course-search-button">Search</button>
+          </div>
+          <p id="youtube-canvas-source-status" class="status" aria-live="polite"></p>
+          <div id="youtube-canvas-course-results" class="canvas-search-results"></div>
+          <div id="youtube-canvas-source-picker" class="youtube-canvas-source-picker" hidden>
+            <div>
+              <h3 id="youtube-canvas-course-title">Canvas course</h3>
+              <p class="muted">Select modules and/or pages. Leave everything clear to use all readable course pages.</p>
+            </div>
+            <div class="youtube-canvas-source-columns">
+              <fieldset>
+                <legend>Modules</legend>
+                <div id="youtube-canvas-module-list" class="canvas-source-list"></div>
+              </fieldset>
+              <fieldset>
+                <legend>Pages</legend>
+                <div id="youtube-canvas-page-list" class="canvas-source-list"></div>
+              </fieldset>
+            </div>
+            <label class="youtube-aqf-label">
+              <span>Learner level (AQF)</span>
+              <select id="youtube-aqf-level">
+                <option value="">Not specified</option>
+                <option value="1">AQF 1 &middot; Certificate I</option>
+                <option value="2">AQF 2 &middot; Certificate II</option>
+                <option value="3">AQF 3 &middot; Certificate III</option>
+                <option value="4">AQF 4 &middot; Certificate IV</option>
+                <option value="5">AQF 5 &middot; Diploma</option>
+                <option value="6">AQF 6 &middot; Advanced Diploma</option>
+                <option value="7">AQF 7 &middot; Bachelor Degree</option>
+                <option value="8">AQF 8 &middot; Bachelor Honours / Grad Cert</option>
+                <option value="9">AQF 9 &middot; Masters Degree</option>
+                <option value="10">AQF 10 &middot; Doctoral Degree</option>
+              </select>
+            </label>
+            <button type="button" id="youtube-canvas-suggest-button">Read content and suggest videos</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="youtube-slot-panel" class="panel youtube-slot-panel" hidden>
+        <div>
+          <p class="eyebrow">3 &middot; Video slots found on the page</p>
+          <h2 class="step-title">Pick videos for each slot</h2>
+          <p class="muted">Select one or more videos per slot, preview the Canvas HTML, then push it to the live page.</p>
+        </div>
+        <div id="youtube-slot-results"></div>
+      </section>
+
+      <button type="button" id="youtube-manual-toggle" class="secondary yt-disclosure-toggle" aria-expanded="false">
+        Or search YouTube directly &rsaquo;
+      </button>
+
+      <div id="youtube-manual-panel" hidden>
+        <section class="panel youtube-panel" id="youtube-panel">
+          <div class="canvas-header">
+            <div>
+              <p class="eyebrow">Keyword search</p>
+              <h2 class="step-title">Search YouTube directly</h2>
+            </div>
+            <span id="youtube-status-badge" class="badge canvas-badge">Checking</span>
+          </div>
+          <div class="youtube-search-row">
+            <label>
+              <span>Search YouTube</span>
+              <input id="youtube-search-input" type="text" placeholder="e.g. measurable goals for vocational education">
+            </label>
+            <button type="button" id="youtube-search-button">Search</button>
+          </div>
+          <p id="youtube-status" class="status"></p>
+          <div id="youtube-results" class="youtube-results"></div>
+        </section>
+
+        <section class="panel youtube-chat-panel" id="youtube-chat-panel">
+          <div class="canvas-header">
+            <div>
+              <p class="eyebrow">VAL Video Chat</p>
+              <h2 class="step-title">Ask about selected videos</h2>
+            </div>
+            <span id="youtube-selected-count" class="badge canvas-badge">0 videos</span>
+          </div>
+          <div id="youtube-chat-messages" class="canvas-chat-messages">
+            <p class="muted">Search YouTube, select videos, then ask VAL to compare or summarise what the metadata says.</p>
+          </div>
+          <div class="canvas-chat-row">
+            <label>
+              <span>Question</span>
+              <textarea id="youtube-chat-input" rows="3" placeholder="e.g. Which selected video looks most suitable for first-year learners?"></textarea>
+            </label>
+            <button type="button" id="youtube-chat-button" disabled>Ask VAL</button>
+          </div>
+          <p id="youtube-chat-status" class="status"></p>
+        </section>
+      </div>
+    </div>
 
   </main>
 
   <footer class="app-footer">
-    <span>H5P Creator</span>
+    <span id="footer-product-name">H5P Creator</span>
     <span class="footer-sep">·</span>
     <span>v0.5.0</span>
     <span class="footer-sep">·</span>
     <span>RMIT VE Learning Experience</span>
     <span class="footer-sep">·</span>
     <span id="footer-ai" class="footer-ai"></span>
+    <span id="footer-count" class="footer-count" hidden>
+      <span class="footer-sep">·</span>
+      <span id="footer-count-num"></span> activities generated
+    </span>
   </footer>
 
   <!-- ── Preview modal ─────────────────────────────────────────────── -->
@@ -271,6 +618,6 @@
     </button>
   </div>
 
-<script src="/static/app.js?v=20260507c" defer></script>
+<script src="/static/app.js?v=20260721-canvas-connect" defer></script>
 </body>
 </html>

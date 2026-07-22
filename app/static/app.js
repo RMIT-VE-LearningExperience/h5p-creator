@@ -8,13 +8,106 @@ const API_BASE = (window.location.hostname.includes("web.app") ||
 
 // ── DOM refs ───────────────────────────────────────────────────────────
 const fileInput        = document.getElementById("file-input");
+const h5pWorkspace     = document.getElementById("h5p-workspace");
+const canvasWorkspace  = document.getElementById("canvas-workspace");
+const powerpointWorkspace = document.getElementById("powerpoint-workspace");
+const youtubeWorkspace = document.getElementById("youtube-workspace");
 const fileLabel        = document.getElementById("file-label");
 const fileTags         = document.getElementById("file-tags");
 const uploadSection    = document.getElementById("upload-section");
 const pasteSection     = document.getElementById("paste-section");
 const pasteContent     = document.getElementById("paste-content");
 const subjectAreaInput = document.getElementById("subject-area");
+const trainingLookupCard = document.getElementById("training-lookup-card");
 const learnerCtxInput  = document.getElementById("learner-context");
+const canvasStatusBadge = document.getElementById("canvas-status-badge");
+const canvasBaseUrlInput = document.getElementById("canvas-base-url");
+const canvasApiTokenInput = document.getElementById("canvas-api-token");
+const canvasTokenToggle = document.getElementById("canvas-token-toggle");
+const canvasConnectButton = document.getElementById("canvas-connect-button");
+const canvasDisconnectButton = document.getElementById("canvas-disconnect-button");
+const canvasConnectionStatus = document.getElementById("canvas-connection-status");
+const canvasTools = document.getElementById("canvas-tools");
+const canvasSearchInput = document.getElementById("canvas-search-input");
+const canvasSearchButton = document.getElementById("canvas-search-button");
+const canvasStatusEl = document.getElementById("canvas-status");
+const canvasSearchResults = document.getElementById("canvas-search-results");
+const canvasCourseDetail = document.getElementById("canvas-course-detail");
+const canvasChatContext = document.getElementById("canvas-chat-context");
+const canvasChatMessages = document.getElementById("canvas-chat-messages");
+const canvasChatInput = document.getElementById("canvas-chat-input");
+const canvasChatButton = document.getElementById("canvas-chat-button");
+const canvasChatStatus = document.getElementById("canvas-chat-status");
+const canvasFilesCount = document.getElementById("canvas-files-count");
+const canvasFilesStatus = document.getElementById("canvas-files-status");
+const canvasFilesList = document.getElementById("canvas-files-list");
+const canvasFilePreview = document.getElementById("canvas-file-preview");
+const canvasPreviewFilesButton = document.getElementById("canvas-preview-files");
+const canvasAskFilesButton = document.getElementById("canvas-ask-files");
+const canvasGenerateFilesButton = document.getElementById("canvas-generate-files");
+const canvasFileActivityType = document.getElementById("canvas-file-activity-type");
+const canvasPagesCount = document.getElementById("canvas-pages-count");
+const canvasPagesStatus = document.getElementById("canvas-pages-status");
+const canvasPagesList = document.getElementById("canvas-pages-list");
+const canvasPagePreview = document.getElementById("canvas-page-preview");
+const canvasPreviewPagesButton = document.getElementById("canvas-preview-pages");
+const canvasSuggestVideosButton = document.getElementById("canvas-suggest-videos");
+const canvasAskPagesButton = document.getElementById("canvas-ask-pages");
+const powerpointCourseUrl = document.getElementById("powerpoint-course-url");
+const powerpointLoadModulesButton = document.getElementById("powerpoint-load-modules-button");
+const powerpointModuleCount = document.getElementById("powerpoint-module-count");
+const powerpointModuleList = document.getElementById("powerpoint-module-list");
+const powerpointSlideCount = document.getElementById("powerpoint-slide-count");
+const powerpointAudience = document.getElementById("powerpoint-audience");
+const powerpointIncludeImages = document.getElementById("powerpoint-include-images");
+const powerpointGenerateButton = document.getElementById("powerpoint-generate-button");
+const powerpointStatusBadge = document.getElementById("powerpoint-status-badge");
+const powerpointStatus = document.getElementById("powerpoint-status");
+const powerpointResult = document.getElementById("powerpoint-result");
+const powerpointLoaderWrap = document.getElementById("powerpoint-loader-wrap");
+const powerpointLoaderBar = document.getElementById("powerpoint-loader-bar");
+const powerpointLoaderMessage = document.getElementById("powerpoint-loader-message");
+const youtubeStatusBadge = document.getElementById("youtube-status-badge");
+const youtubeSearchInput = document.getElementById("youtube-search-input");
+const youtubeSearchButton = document.getElementById("youtube-search-button");
+const youtubeStatusEl = document.getElementById("youtube-status");
+const youtubeResults = document.getElementById("youtube-results");
+const youtubeSelectedCount = document.getElementById("youtube-selected-count");
+const youtubeChatMessages = document.getElementById("youtube-chat-messages");
+const youtubeChatInput = document.getElementById("youtube-chat-input");
+const youtubeChatButton = document.getElementById("youtube-chat-button");
+const youtubeChatStatus = document.getElementById("youtube-chat-status");
+const youtubeCanvasStatusBadge = document.getElementById("youtube-canvas-status-badge");
+const youtubeCanvasBaseUrlInput = document.getElementById("youtube-canvas-base-url");
+const youtubeCanvasApiTokenInput = document.getElementById("youtube-canvas-api-token");
+const youtubeCanvasTokenToggle = document.getElementById("youtube-canvas-token-toggle");
+const youtubeCanvasConnectButton = document.getElementById("youtube-canvas-connect-button");
+const youtubeCanvasDisconnectButton = document.getElementById("youtube-canvas-disconnect-button");
+const youtubeCanvasConnectionStatus = document.getElementById("youtube-canvas-connection-status");
+const youtubeCanvasTools = document.getElementById("youtube-canvas-tools");
+const youtubeCanvasCourseSearch = document.getElementById("youtube-canvas-course-search");
+const youtubeCanvasCourseSearchButton = document.getElementById("youtube-canvas-course-search-button");
+const youtubeCanvasSourceStatus = document.getElementById("youtube-canvas-source-status");
+const youtubeCanvasCourseResults = document.getElementById("youtube-canvas-course-results");
+const youtubeCanvasSourcePicker = document.getElementById("youtube-canvas-source-picker");
+const youtubeCanvasCourseTitle = document.getElementById("youtube-canvas-course-title");
+const youtubeCanvasModuleList = document.getElementById("youtube-canvas-module-list");
+const youtubeCanvasPageList = document.getElementById("youtube-canvas-page-list");
+const youtubeCanvasSuggestButton = document.getElementById("youtube-canvas-suggest-button");
+const youtubeAqfLevelSelect = document.getElementById("youtube-aqf-level");
+const youtubeSlotPanel = document.getElementById("youtube-slot-panel");
+const youtubeSlotResults = document.getElementById("youtube-slot-results");
+const youtubeStepPills = [1, 2, 3].map(n => document.getElementById(`youtube-step-pill-${n}`));
+const youtubeConnectSummary = document.getElementById("youtube-connect-summary");
+const youtubeConnectSummaryText = document.getElementById("youtube-connect-summary-text");
+const youtubeConnectChangeButton = document.getElementById("youtube-connect-change-button");
+const youtubeConnectForm = document.getElementById("youtube-connect-form");
+const youtubeContentSummary = document.getElementById("youtube-content-summary");
+const youtubeContentSummaryText = document.getElementById("youtube-content-summary-text");
+const youtubeContentChangeButton = document.getElementById("youtube-content-change-button");
+const youtubeContentForm = document.getElementById("youtube-content-form");
+const youtubeManualToggle = document.getElementById("youtube-manual-toggle");
+const youtubeManualPanel = document.getElementById("youtube-manual-panel");
 const paraCountInput   = document.getElementById("paragraph-count");
 const paraCountLabel   = document.getElementById("para-count-label");
 const statusEl         = document.getElementById("status");
@@ -26,6 +119,8 @@ const activityCounter  = document.getElementById("activity-counter");
 const activityCountEl  = document.getElementById("activity-count");
 
 const MAX_ACTIVITIES = 5;
+let trainingLookup = { code: "", status: "idle", product: null, error: "" };
+let trainingLookupTimer = null;
 
 const resultsTitleEl    = document.getElementById("results-title");
 const resultsCountBadge = document.getElementById("results-count-badge");
@@ -40,6 +135,40 @@ const previewModalClose   = document.getElementById("preview-modal-close");
 const previewModalCancel  = document.getElementById("preview-modal-cancel");
 const previewModalDownload = document.getElementById("preview-modal-download");
 
+
+// ── App tabs ──────────────────────────────────────────────────────────
+const WORKSPACE_PAGES = {
+  "/": { workspace: "h5p", title: "H5P Creator" },
+  "/h5p": { workspace: "h5p", title: "H5P Creator" },
+  "/canvas": { workspace: "canvas", title: "Canvas Courses" },
+  "/powerpoint": { workspace: "powerpoint", title: "Course PowerPoint" },
+  "/youtube": { workspace: "youtube", title: "Video Finder" },
+};
+
+function activateWorkspace(target) {
+  const page = Object.values(WORKSPACE_PAGES).find(item => item.workspace === target)
+    || WORKSPACE_PAGES["/h5p"];
+  h5pWorkspace.hidden = target !== "h5p";
+  canvasWorkspace.hidden = target !== "canvas";
+  if (powerpointWorkspace) powerpointWorkspace.hidden = target !== "powerpoint";
+  if (youtubeWorkspace) youtubeWorkspace.hidden = target !== "youtube";
+  document.title = `${page.title} · RMIT VE Learning Experience`;
+  const appTitle = document.getElementById("app-title-text");
+  const footerProduct = document.getElementById("footer-product-name");
+  if (appTitle) appTitle.textContent = page.title;
+  if (footerProduct) footerProduct.textContent = page.title;
+  document.querySelector(".shell")?.classList.toggle("shell-wide", target === "youtube");
+}
+
+const initialPage = WORKSPACE_PAGES[window.location.pathname] || WORKSPACE_PAGES["/h5p"];
+activateWorkspace(initialPage.workspace);
+
+window.addEventListener("popstate", () => {
+  const page = WORKSPACE_PAGES[window.location.pathname] || WORKSPACE_PAGES["/h5p"];
+  activateWorkspace(page.workspace);
+});
+
+document.addEventListener("click", handleYouTubeEmbedCopy);
 
 // ── Step navigation ────────────────────────────────────────────────────
 function goToStep(n) {
@@ -127,6 +256,20 @@ function getContentMode() {
   return el ? el.value : "shared";
 }
 
+// ── training.gov.au lookup ────────────────────────────────────────────
+subjectAreaInput.addEventListener("input", () => {
+  const code = normaliseTrainingCode(subjectAreaInput.value);
+  if (trainingLookupTimer) clearTimeout(trainingLookupTimer);
+  if (!looksLikeTrainingCode(code)) {
+    trainingLookup = { code: "", status: "idle", product: null, error: "" };
+    renderTrainingLookup();
+    return;
+  }
+  trainingLookup = { code, status: "pending", product: null, error: "" };
+  renderTrainingLookup();
+  trainingLookupTimer = setTimeout(() => lookupTrainingProduct(code), 500);
+});
+
 // ── Generate button ────────────────────────────────────────────────────
 generateButton.addEventListener("click", async () => {
   const files = [...fileInput.files];
@@ -156,6 +299,7 @@ generateButton.addEventListener("click", async () => {
   });
 
   try {
+    await ensureTrainingLookupReady();
     await runBatchGenerate(files, expandedTypes);
   } finally {
     generateButton.disabled = false;
@@ -182,6 +326,7 @@ async function runBatchGenerate(files, types) {
   }
 
   if (subjectAreaInput.value.trim()) data.append("subject_area",    subjectAreaInput.value.trim());
+  if (trainingLookup.product)        data.append("training_context", formatTrainingContext(trainingLookup.product));
   if (learnerCtxInput.value.trim())  data.append("learner_context", learnerCtxInput.value.trim());
 
   data.append("activity_types",  JSON.stringify(types));
@@ -192,13 +337,14 @@ async function runBatchGenerate(files, types) {
 
   // Abort if the server hasn't responded within 4 minutes
   const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), 4 * 60 * 1000);
+  const timeoutId  = setTimeout(() => controller.abort(), 7 * 60 * 1000);
 
   dbg("→ POST /activities/generate_batch", {
     ai_provider: data.get("ai_provider"),
     activity_types: data.get("activity_types"),
     content_mode: data.get("content_mode"),
     subject_area: data.get("subject_area") || "(none)",
+    training_context: data.get("training_context") ? "included" : "(none)",
     files: [...(inputMode === "upload" ? fileInput.files : [])].map(f => f.name),
   });
 
@@ -219,6 +365,7 @@ async function runBatchGenerate(files, types) {
     dbg("Success", { count: (payload.results || []).length, ai_used: providers, titles: (payload.results || []).map(r => r.title) });
     GenerationLoader.finish();
     renderResults(payload);
+    recordGenerated((payload.results || []).length);
     const resultTypes = (payload.results || []).map(r => r.activity_type);
     gtag("event", "generate_completed", {
       activity_count: resultTypes.length,
@@ -481,7 +628,273 @@ function parseAsteriskSyntax(escapedText, tokenClass) {
   });
 }
 
+// ── Course PowerPoint generator ───────────────────────────────────────
+initPowerPointGenerator();
+
+const powerpointSelectedModules = new Set();
+
+function initPowerPointGenerator() {
+  if (!powerpointGenerateButton) return;
+  powerpointGenerateButton.addEventListener("click", generateCoursePowerPoint);
+  if (powerpointLoadModulesButton) powerpointLoadModulesButton.addEventListener("click", loadPowerPointModules);
+  if (powerpointModuleList) {
+    powerpointModuleList.addEventListener("change", (e) => {
+      const input = e.target.closest('input[type="checkbox"][data-module-id]');
+      if (!input) return;
+      if (input.checked) powerpointSelectedModules.add(input.dataset.moduleId);
+      else powerpointSelectedModules.delete(input.dataset.moduleId);
+      updatePowerPointModuleCount();
+    });
+  }
+  if (powerpointCourseUrl) {
+    powerpointCourseUrl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        loadPowerPointModules();
+      }
+    });
+    powerpointCourseUrl.addEventListener("input", () => {
+      powerpointSelectedModules.clear();
+      if (powerpointModuleList) {
+        powerpointModuleList.hidden = true;
+        powerpointModuleList.innerHTML = "";
+      }
+      if (powerpointModuleCount) powerpointModuleCount.textContent = "No modules loaded";
+    });
+  }
+}
+
+async function loadPowerPointModules() {
+  const courseUrl = (powerpointCourseUrl?.value || "").trim();
+  if (!courseUrl) {
+    setPowerPointStatus("Enter a Canvas course URL or ID.", true);
+    powerpointCourseUrl?.focus();
+    return;
+  }
+  powerpointLoadModulesButton.disabled = true;
+  setPowerPointStatus("Loading course modules...");
+  if (powerpointModuleList) {
+    powerpointModuleList.hidden = false;
+    powerpointModuleList.innerHTML = `<p class="muted">Loading modules...</p>`;
+  }
+  try {
+    const response = await fetch(`${API_BASE}/powerpoints/course/modules?course_url=${encodeURIComponent(courseUrl)}`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Module loading failed"));
+    renderPowerPointModules(payload.modules || []);
+    setPowerPointStatus("");
+    gtag("event", "powerpoint_modules_loaded", { module_count: (payload.modules || []).length });
+  } catch (err) {
+    setPowerPointStatus(err.message, true);
+    if (powerpointModuleList) {
+      powerpointModuleList.hidden = true;
+      powerpointModuleList.innerHTML = "";
+    }
+  } finally {
+    powerpointLoadModulesButton.disabled = false;
+  }
+}
+
+function renderPowerPointModules(modules) {
+  powerpointSelectedModules.clear();
+  if (!powerpointModuleList) return;
+  if (!modules.length) {
+    powerpointModuleList.hidden = false;
+    powerpointModuleList.innerHTML = `<p class="muted">No modules found for this course.</p>`;
+    updatePowerPointModuleCount(0);
+    return;
+  }
+  powerpointModuleList.hidden = false;
+  powerpointModuleList.innerHTML = modules.map((module, index) => `
+    <label class="powerpoint-module-row">
+      <input type="checkbox" data-module-id="${escapeHtml(module.id)}">
+      <span class="canvas-file-meta">
+        <strong>${escapeHtml(module.name || "Untitled module")}</strong>
+        <span>${escapeHtml(String(module.items_count || 0))} item${Number(module.items_count || 0) === 1 ? "" : "s"}${module.published ? "" : " · unpublished"}</span>
+      </span>
+    </label>
+  `).join("");
+  updatePowerPointModuleCount(modules.length);
+}
+
+function updatePowerPointModuleCount(total = null) {
+  if (!powerpointModuleCount) return;
+  const selected = powerpointSelectedModules.size;
+  if (selected > 0) {
+    powerpointModuleCount.textContent = `${selected} selected`;
+  } else if (total != null) {
+    powerpointModuleCount.textContent = `${total} loaded · all will be used unless selected`;
+  } else {
+    powerpointModuleCount.textContent = "All loaded modules will be used unless selected";
+  }
+}
+
+async function generateCoursePowerPoint() {
+  const courseUrl = (powerpointCourseUrl?.value || "").trim();
+  if (!courseUrl) {
+    setPowerPointStatus("Enter a Canvas course URL or ID.", true);
+    powerpointCourseUrl?.focus();
+    return;
+  }
+  const slideCount = Math.max(4, Math.min(40, parseInt(powerpointSlideCount?.value, 10) || 12));
+  if (powerpointSlideCount) powerpointSlideCount.value = slideCount;
+
+  powerpointGenerateButton.disabled = true;
+  powerpointResult.hidden = true;
+  powerpointResult.innerHTML = "";
+  setPowerPointStatus("");
+  PowerPointLoader.start();
+  if (powerpointStatusBadge) powerpointStatusBadge.textContent = "Generating";
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8 * 60 * 1000);
+
+  try {
+    const response = await fetch(`${API_BASE}/powerpoints/course`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        course_url: courseUrl,
+        slide_count: slideCount,
+        audience: (powerpointAudience?.value || "").trim(),
+        include_images: Boolean(powerpointIncludeImages?.checked),
+        selected_module_ids: [...powerpointSelectedModules].map(id => parseInt(id, 10)).filter(Number.isFinite),
+      }),
+    });
+    clearTimeout(timeoutId);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "PowerPoint generation failed"));
+
+    PowerPointLoader.finish();
+    if (powerpointStatusBadge) powerpointStatusBadge.textContent = "Ready";
+    renderPowerPointResult(payload);
+    gtag("event", "powerpoint_generated", {
+      slide_count: payload.slide_count || slideCount,
+      include_images: Boolean(powerpointIncludeImages?.checked),
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    PowerPointLoader.fail();
+    if (powerpointStatusBadge) powerpointStatusBadge.textContent = "Ready";
+    const msg = err.name === "AbortError"
+      ? "Request timed out. Try fewer slides or a smaller course."
+      : err.message;
+    setPowerPointStatus(msg, true);
+  } finally {
+    powerpointGenerateButton.disabled = false;
+  }
+}
+
+function renderPowerPointResult(payload) {
+  if (!powerpointResult) return;
+  powerpointResult.hidden = false;
+  powerpointResult.innerHTML = `
+    <article class="powerpoint-download">
+      <div>
+        <p class="eyebrow">Generated Deck</p>
+        <h3>${escapeHtml(payload.title || "Course PowerPoint")}</h3>
+        <p class="muted">${escapeHtml(String(payload.slide_count || 0))} slides · ${escapeHtml(payload.ai_provider || "VAL")} / ${escapeHtml(payload.ai_model || "")}</p>
+      </div>
+      <button type="button" id="powerpoint-download-button">Download .pptx</button>
+    </article>
+  `;
+  const button = document.getElementById("powerpoint-download-button");
+  if (button) {
+    button.addEventListener("click", () => {
+      triggerBase64Download(
+        payload.download_base64,
+        payload.filename || `${sanitiseFilename(payload.title)}.pptx`,
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      );
+      gtag("event", "powerpoint_downloaded");
+    });
+  }
+}
+
+function setPowerPointStatus(message, isError = false) {
+  if (!powerpointStatus) return;
+  powerpointStatus.textContent = message;
+  powerpointStatus.style.color = isError ? "#b42318" : "";
+}
+
+const PowerPointLoader = (() => {
+  const MESSAGES = [
+    "Reading Canvas modules and pages",
+    "Extracting course file text",
+    "Condensing the course into slide structure",
+    "Selecting useful visuals where available",
+    "Rendering the PowerPoint deck",
+  ];
+  let timer = null;
+  let index = 0;
+
+  function showNext() {
+    if (!powerpointLoaderMessage || !powerpointLoaderBar) return;
+    powerpointLoaderMessage.textContent = MESSAGES[index % MESSAGES.length];
+    powerpointLoaderBar.style.width = `${Math.min(88, 12 + index * 16)}%`;
+    index++;
+    timer = setTimeout(showNext, 2600);
+  }
+
+  return {
+    start() {
+      if (!powerpointLoaderWrap || !powerpointLoaderBar || !powerpointLoaderMessage) return;
+      index = 0;
+      powerpointLoaderWrap.hidden = false;
+      powerpointLoaderBar.style.width = "6%";
+      showNext();
+    },
+    finish() {
+      clearTimeout(timer);
+      if (!powerpointLoaderWrap || !powerpointLoaderBar || !powerpointLoaderMessage) return;
+      powerpointLoaderMessage.textContent = "Done!";
+      powerpointLoaderBar.style.width = "100%";
+      setTimeout(() => {
+        powerpointLoaderWrap.hidden = true;
+        powerpointLoaderBar.style.width = "0%";
+      }, 550);
+    },
+    fail() {
+      clearTimeout(timer);
+      if (!powerpointLoaderWrap || !powerpointLoaderBar) return;
+      powerpointLoaderWrap.hidden = true;
+      powerpointLoaderBar.style.width = "0%";
+    },
+  };
+})();
+
 function dbg() {}
+
+// ── Activity counter ───────────────────────────────────────────────────
+function renderActivityCount(total) {
+  const wrap = document.getElementById("footer-count");
+  const num  = document.getElementById("footer-count-num");
+  if (!wrap || !num || total <= 0) return;
+  num.textContent = total.toLocaleString();
+  wrap.hidden = false;
+}
+
+(async () => {
+  try {
+    const res  = await fetch(`${API_BASE}/stats`);
+    const data = await res.json();
+    renderActivityCount(data.total_generated || 0);
+  } catch { /* silent */ }
+})();
+
+async function recordGenerated(count) {
+  try {
+    await fetch(`${API_BASE}/stats/record`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ count }),
+    });
+    const num = document.getElementById("footer-count-num");
+    const current = parseInt((num?.textContent || "0").replace(/,/g, ""), 10) || 0;
+    renderActivityCount(current + count);
+  } catch { /* silent */ }
+}
 
 // ── Generation loader ──────────────────────────────────────────────────
 const GenerationLoader = (() => {
@@ -507,8 +920,10 @@ const GenerationLoader = (() => {
   const FINAL_MSG = "Almost there — the AI is just triple-checking its work";
 
   const STAGES = [
-    [12, 1500], [28, 2500], [42, 3500], [55, 5000],
-    [65, 7000], [73, 9000], [80, 12000], [85, 18000], [88, 30000],
+    [10, 1000], [22, 2000], [34, 3000], [45, 4000],
+    [54, 5000], [62, 7000], [68, 9000], [73, 12000],
+    [77, 15000], [80, 18000], [83, 22000], [86, 25000],
+    [88, 25000], [90, 30000],
   ];
 
   let msgTimer = null, stageTimer = null;
@@ -619,9 +1034,9 @@ function setStatus(message, isGenerating = false, isError = false) {
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────
-function triggerBase64Download(base64, filename) {
+function triggerBase64Download(base64, filename, mimeType = "application/zip") {
   const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-  const blob  = new Blob([bytes], { type: "application/zip" });
+  const blob  = new Blob([bytes], { type: mimeType });
   const url   = URL.createObjectURL(blob);
   const a     = document.createElement("a");
   a.href      = url;
@@ -674,6 +1089,1760 @@ function extractErrorMessage(payload, fallback) {
   if (payload && typeof payload.detail  === "string" && payload.detail.trim())  return payload.detail;
   if (payload && typeof payload.message === "string" && payload.message.trim()) return payload.message;
   return fallback;
+}
+
+function normaliseTrainingCode(value) {
+  return String(value || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+}
+
+function looksLikeTrainingCode(value) {
+  return /^[A-Z0-9]{5,14}$/.test(value || "") && /[0-9]/.test(value || "");
+}
+
+async function ensureTrainingLookupReady() {
+  const code = normaliseTrainingCode(subjectAreaInput.value);
+  if (!looksLikeTrainingCode(code)) return;
+  if (trainingLookup.product && trainingLookup.code === code) return;
+  if (trainingLookupTimer) {
+    clearTimeout(trainingLookupTimer);
+    trainingLookupTimer = null;
+  }
+  await lookupTrainingProduct(code);
+}
+
+async function lookupTrainingProduct(code) {
+  trainingLookup = { code, status: "loading", product: null, error: "" };
+  renderTrainingLookup();
+  try {
+    const response = await fetch(`${API_BASE}/activities/training-product/${encodeURIComponent(code)}`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "training.gov.au lookup failed"));
+    if (normaliseTrainingCode(subjectAreaInput.value) !== code) return;
+    trainingLookup = { code, status: "ready", product: payload, error: "" };
+    if (payload.title && subjectAreaInput.value.trim().toUpperCase() === code) {
+      subjectAreaInput.value = `${payload.code} ${payload.title}`;
+    }
+  } catch (err) {
+    if (normaliseTrainingCode(subjectAreaInput.value) !== code) return;
+    trainingLookup = { code, status: "error", product: null, error: err.message };
+  }
+  renderTrainingLookup();
+}
+
+function renderTrainingLookup() {
+  if (!trainingLookupCard) return;
+  const { status, product, error, code } = trainingLookup;
+  if (status === "idle") {
+    trainingLookupCard.hidden = true;
+    trainingLookupCard.innerHTML = "";
+    return;
+  }
+  trainingLookupCard.hidden = false;
+  if (status === "pending" || status === "loading") {
+    trainingLookupCard.className = "training-lookup-card loading";
+    trainingLookupCard.textContent = status === "loading"
+      ? `Checking training.gov.au for ${code}...`
+      : `Will check training.gov.au for ${code}`;
+    return;
+  }
+  if (status === "error") {
+    trainingLookupCard.className = "training-lookup-card error";
+    trainingLookupCard.textContent = `Could not fetch ${code}; generation will still use your typed subject.`;
+    dbg("training.gov.au lookup failed", { code, error });
+    return;
+  }
+  trainingLookupCard.className = "training-lookup-card ready";
+  const unitCount = product.units && product.units.length ? `${product.units.length} units found` : "";
+  trainingLookupCard.innerHTML = `
+    <strong>${escapeHtml(product.code)} ${escapeHtml(product.title || "")}</strong>
+    <span>${escapeHtml(product.product_type || "training product")}${unitCount ? ` · ${escapeHtml(unitCount)}` : ""}</span>
+  `;
+}
+
+function formatTrainingContext(product) {
+  const lines = [
+    `Code: ${product.code || ""}`,
+    `Title: ${product.title || ""}`,
+    `Type: ${product.product_type || "training product"}`,
+    `Source: ${product.source_url || ""}`,
+  ];
+  if (product.usage_recommendation) lines.push(`Usage recommendation: ${product.usage_recommendation}`);
+  if (product.summary) lines.push("", "Summary:", product.summary);
+  if (product.units && product.units.length) {
+    lines.push("", "Units of competency:");
+    product.units.slice(0, 80).forEach(unit => {
+      lines.push(`- ${unit.code}: ${unit.title}${unit.essential ? ` [${unit.essential}]` : ""}`);
+    });
+  }
+  return lines.join("\n").trim();
+}
+
+// ── Canvas course reader ───────────────────────────────────────────────
+let canvasReady = false;
+const canvasCourseContext = new Map();
+const canvasSelectedFiles = new Set();
+const canvasSelectedPages = new Set();
+let canvasCurrentCourseId = null;
+let canvasCurrentCourseName = "";
+let canvasSessionCredentials = null;
+
+const canvasConnectionViews = [
+  {
+    workspace: "canvas",
+    baseUrl: canvasBaseUrlInput,
+    apiToken: canvasApiTokenInput,
+    tokenToggle: canvasTokenToggle,
+    connectButton: canvasConnectButton,
+    disconnectButton: canvasDisconnectButton,
+    badge: canvasStatusBadge,
+    status: canvasConnectionStatus,
+    tools: canvasTools,
+  },
+  {
+    workspace: "youtube",
+    baseUrl: youtubeCanvasBaseUrlInput,
+    apiToken: youtubeCanvasApiTokenInput,
+    tokenToggle: youtubeCanvasTokenToggle,
+    connectButton: youtubeCanvasConnectButton,
+    disconnectButton: youtubeCanvasDisconnectButton,
+    badge: youtubeCanvasStatusBadge,
+    status: youtubeCanvasConnectionStatus,
+    tools: youtubeCanvasTools,
+  },
+];
+
+initCanvasConnections();
+initCanvasReader();
+
+function initCanvasConnections() {
+  canvasConnectionViews.forEach(view => {
+    if (!view.connectButton || !view.baseUrl || !view.apiToken) return;
+    view.connectButton.addEventListener("click", () => connectCanvas(view));
+    view.disconnectButton?.addEventListener("click", disconnectCanvas);
+    view.tokenToggle?.addEventListener("click", () => {
+      const showing = view.apiToken.type === "text";
+      view.apiToken.type = showing ? "password" : "text";
+      view.tokenToggle.textContent = showing ? "Show" : "Hide";
+      view.tokenToggle.setAttribute("aria-label", `${showing ? "Show" : "Hide"} API token`);
+    });
+    view.apiToken.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        connectCanvas(view);
+      }
+    });
+  });
+
+  const activeView = canvasConnectionViews.find(view => view.workspace === initialPage.workspace);
+  if (activeView) refreshCanvasStatus(activeView);
+}
+
+function canvasCredentialHeaders(credentials = canvasSessionCredentials) {
+  if (!credentials) return {};
+  return {
+    "X-Canvas-Base-URL": credentials.baseUrl,
+    "X-Canvas-API-Token": credentials.apiToken,
+  };
+}
+
+async function canvasFetch(path, options = {}, credentials = canvasSessionCredentials) {
+  return fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...canvasCredentialHeaders(credentials),
+    },
+  });
+}
+
+async function connectCanvas(view) {
+  const credentials = {
+    baseUrl: view.baseUrl.value.trim().replace(/\/$/, ""),
+    apiToken: view.apiToken.value.trim(),
+  };
+  if (!credentials.baseUrl || !credentials.apiToken) {
+    setCanvasConnectionStatus(view, "Enter both your Canvas institution URL and API token.", true);
+    return;
+  }
+
+  view.connectButton.disabled = true;
+  setCanvasConnectionStatus(view, "Checking access...");
+  try {
+    const response = await canvasFetch("/canvas/status", {}, credentials);
+    const payload = await readResponsePayload(response);
+    if (!response.ok || !payload.connected) {
+      throw new Error(extractErrorMessage(payload, "Could not connect to Canvas"));
+    }
+    canvasSessionCredentials = credentials;
+    canvasConnectionViews.forEach(item => {
+      if (item.baseUrl) item.baseUrl.value = credentials.baseUrl;
+      if (item.apiToken) item.apiToken.value = "";
+    });
+    setCanvasConnected(payload);
+    gtag("event", "canvas_user_connected", { canvas_host: new URL(credentials.baseUrl).hostname });
+  } catch (err) {
+    canvasSessionCredentials = null;
+    setCanvasConnectionStatus(view, err.message, true);
+    setCanvasDisconnected();
+  } finally {
+    view.connectButton.disabled = false;
+  }
+}
+
+function disconnectCanvas() {
+  canvasSessionCredentials = null;
+  canvasReady = false;
+  canvasCourseContext.clear();
+  canvasSelectedFiles.clear();
+  canvasSelectedPages.clear();
+  canvasCurrentCourseId = null;
+  canvasCurrentCourseName = "";
+  canvasConnectionViews.forEach(view => {
+    if (view.apiToken) view.apiToken.value = "";
+    if (view.status) view.status.textContent = "Disconnected. The session token has been cleared.";
+  });
+  setCanvasDisconnected();
+  resetYouTubeCanvasSource();
+}
+
+function setCanvasConnected(payload) {
+  canvasReady = true;
+  const name = payload.user?.name || "Canvas user";
+  canvasConnectionViews.forEach(view => {
+    if (view.badge) {
+      view.badge.textContent = "Connected";
+      view.badge.classList.add("canvas-badge-ready");
+      view.badge.classList.remove("canvas-badge-off");
+    }
+    if (view.tools) view.tools.hidden = false;
+    if (view.disconnectButton) view.disconnectButton.hidden = false;
+    if (view.connectButton) view.connectButton.textContent = "Reconnect";
+    setCanvasConnectionStatus(view, `Connected as ${name}.`);
+  });
+  if (canvasSearchButton) canvasSearchButton.disabled = false;
+  const host = canvasSessionCredentials ? new URL(canvasSessionCredentials.baseUrl).hostname : "";
+  setYoutubeConnectSummary(`Connected as ${name}${host ? ` · ${host}` : ""}.`);
+  updateYoutubeStepIndicator(youtubeContentChosen ? 3 : 2);
+}
+
+function setCanvasDisconnected() {
+  canvasConnectionViews.forEach(view => {
+    if (view.badge) {
+      view.badge.textContent = "Not connected";
+      view.badge.classList.remove("canvas-badge-ready");
+      view.badge.classList.add("canvas-badge-off");
+    }
+    if (view.tools) view.tools.hidden = true;
+    if (view.disconnectButton) view.disconnectButton.hidden = true;
+    if (view.connectButton) view.connectButton.textContent = "Connect";
+  });
+  if (canvasSearchButton) canvasSearchButton.disabled = true;
+  resetYoutubeConnectSummary();
+  updateYoutubeStepIndicator(1);
+}
+
+function setCanvasConnectionStatus(view, message, isError = false) {
+  if (!view?.status) return;
+  view.status.textContent = message;
+  view.status.style.color = isError ? "#b42318" : "";
+}
+
+function initCanvasReader() {
+  if (!canvasSearchButton || !canvasSearchInput) return;
+  canvasSearchButton.addEventListener("click", runCanvasSearch);
+  canvasSearchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runCanvasSearch();
+    }
+  });
+  canvasSearchResults.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-course-id]");
+    if (!btn) return;
+    loadCanvasCourse(btn.dataset.courseId);
+  });
+  if (canvasChatButton) {
+    canvasChatButton.addEventListener("click", askCanvasChat);
+  }
+  if (canvasChatInput) {
+    canvasChatInput.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        askCanvasChat();
+      }
+    });
+  }
+  if (canvasFilesList) {
+    canvasFilesList.addEventListener("change", (e) => {
+      const input = e.target.closest('input[type="checkbox"][data-file-id]');
+      if (!input) return;
+      if (input.checked) canvasSelectedFiles.add(input.dataset.fileId);
+      else canvasSelectedFiles.delete(input.dataset.fileId);
+      updateCanvasFileActions();
+    });
+  }
+  if (canvasPagesList) {
+    canvasPagesList.addEventListener("change", (e) => {
+      const input = e.target.closest('input[type="checkbox"][data-page-url]');
+      if (!input) return;
+      if (input.checked) canvasSelectedPages.add(input.dataset.pageUrl);
+      else canvasSelectedPages.delete(input.dataset.pageUrl);
+      updateCanvasPageActions();
+    });
+  }
+  if (canvasPreviewFilesButton) canvasPreviewFilesButton.addEventListener("click", previewSelectedCanvasFiles);
+  if (canvasAskFilesButton) canvasAskFilesButton.addEventListener("click", askValAboutSelectedFiles);
+  if (canvasGenerateFilesButton) canvasGenerateFilesButton.addEventListener("click", generateH5PFromSelectedFiles);
+  if (canvasPreviewPagesButton) canvasPreviewPagesButton.addEventListener("click", previewSelectedCanvasPages);
+  if (canvasSuggestVideosButton) canvasSuggestVideosButton.addEventListener("click", suggestVideosForSelectedCanvasPages);
+  if (canvasAskPagesButton) canvasAskPagesButton.addEventListener("click", askValAboutSelectedPages);
+  updateCanvasChatContext();
+  updateCanvasFileActions();
+  updateCanvasPageActions();
+}
+
+async function refreshCanvasStatus(view) {
+  try {
+    const response = await canvasFetch("/canvas/status");
+    const payload = await readResponsePayload(response);
+    if (response.ok && payload.connected) {
+      setCanvasConnected(payload);
+    } else {
+      setCanvasDisconnected();
+      setCanvasConnectionStatus(view, "Enter your Canvas details to begin.");
+    }
+  } catch (err) {
+    canvasReady = false;
+    setCanvasDisconnected();
+    setCanvasConnectionStatus(view, "Canvas connection could not be checked.", true);
+  }
+}
+
+async function runCanvasSearch() {
+  if (!canvasReady) return;
+  const query = canvasSearchInput.value.trim();
+  if (query.length < 2) {
+    setCanvasStatus("Enter at least 2 characters or a Canvas course ID.", true);
+    return;
+  }
+  const directCourseId = extractCanvasCourseId(query);
+  if (directCourseId) {
+    await loadCanvasCourse(directCourseId);
+    return;
+  }
+
+  canvasSearchButton.disabled = true;
+  setCanvasStatus("Searching Canvas...");
+  canvasSearchResults.innerHTML = "";
+  canvasCourseDetail.hidden = true;
+  try {
+    const response = await canvasFetch(`/canvas/courses/search?q=${encodeURIComponent(query)}&limit=20`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Canvas search failed"));
+    (payload.results || []).forEach(course => {
+      if (course.id) canvasCourseContext.set(String(course.id), course);
+    });
+    renderCanvasSearchResults(payload.results || []);
+    updateCanvasChatContext();
+    setCanvasStatus((payload.results || []).length ? "" : "No matching courses found.");
+    gtag("event", "canvas_course_search", { result_count: (payload.results || []).length });
+  } catch (err) {
+    setCanvasStatus(err.message, true);
+  } finally {
+    canvasSearchButton.disabled = !canvasReady;
+  }
+}
+
+function renderCanvasSearchResults(courses) {
+  canvasSearchResults.innerHTML = courses.map(course => `
+    <article class="canvas-result">
+      <div>
+        <strong>${escapeHtml(course.name)}</strong>
+        <span>${escapeHtml(canvasCourseMeta(course))}</span>
+      </div>
+      <button type="button" class="secondary" data-course-id="${escapeHtml(course.id)}">Read</button>
+    </article>
+  `).join("");
+}
+
+async function loadCanvasCourse(courseId) {
+  setCanvasStatus(`Reading Canvas course ${courseId}...`);
+  canvasCourseDetail.hidden = false;
+  canvasCourseDetail.innerHTML = `<p class="muted">Loading course details...</p>`;
+  try {
+    const response = await canvasFetch(`/canvas/courses/${encodeURIComponent(courseId)}`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Could not read Canvas course"));
+    if (payload.course?.id) canvasCourseContext.set(String(payload.course.id), payload);
+    canvasCurrentCourseId = payload.course?.id || courseId;
+    canvasCurrentCourseName = payload.course?.name || "";
+    renderCanvasCourse(payload);
+    renderCanvasPages(payload.pages || []);
+    loadCanvasFiles(canvasCurrentCourseId);
+    updateCanvasChatContext();
+    setCanvasStatus("");
+    gtag("event", "canvas_course_read", { course_id: String(courseId) });
+  } catch (err) {
+    canvasCourseDetail.hidden = true;
+    setCanvasStatus(err.message, true);
+  }
+}
+
+function renderCanvasPages(pages) {
+  canvasSelectedPages.clear();
+  if (canvasPagesCount) canvasPagesCount.textContent = `${pages.length} page${pages.length === 1 ? "" : "s"}`;
+  if (!canvasPagesList) return;
+  canvasPagesList.innerHTML = pages.map(page => `
+    <label class="canvas-page-row">
+      <input type="checkbox" data-page-url="${escapeHtml(page.url || "")}">
+      <span class="canvas-file-meta">
+        <strong>${escapeHtml(page.title || page.url || "Untitled page")}</strong>
+        <span>${escapeHtml(page.url || "")}${page.published ? "" : " · unpublished"}</span>
+      </span>
+    </label>
+  `).join("");
+  if (canvasPagePreview) {
+    canvasPagePreview.hidden = true;
+    canvasPagePreview.innerHTML = "";
+  }
+  setCanvasPagesStatus(pages.length ? "" : "No Canvas pages were found in this course.");
+  updateCanvasPageActions();
+}
+
+async function loadCanvasFiles(courseId) {
+  if (!courseId || !canvasFilesList) return;
+  canvasSelectedFiles.clear();
+  updateCanvasFileActions();
+  setCanvasFilesStatus("Loading readable course files...");
+  canvasFilesList.innerHTML = "";
+  canvasFilePreview.hidden = true;
+  canvasFilePreview.innerHTML = "";
+  try {
+    const response = await canvasFetch(`/canvas/courses/${encodeURIComponent(courseId)}/files?limit=150`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Could not list Canvas files"));
+    renderCanvasFiles(payload.results || []);
+    setCanvasFilesStatus((payload.results || []).length ? "" : "No PDFs, PowerPoints, or Word documents were found in this course.");
+  } catch (err) {
+    setCanvasFilesStatus(err.message, true);
+  }
+}
+
+function renderCanvasFiles(files) {
+  if (canvasFilesCount) canvasFilesCount.textContent = `${files.length} file${files.length === 1 ? "" : "s"}`;
+  canvasFilesList.innerHTML = files.map(file => `
+    <label class="canvas-file-row">
+      <input type="checkbox" data-file-id="${escapeHtml(file.id)}">
+      <span class="canvas-file-icon">${escapeHtml((file.extension || "?").toUpperCase())}</span>
+      <span class="canvas-file-meta">
+        <strong>${escapeHtml(file.display_name || file.filename || "Untitled file")}</strong>
+        <span>${escapeHtml(formatFileSize(file.size))}${file.updated_at ? ` · ${escapeHtml(formatCanvasDate(file.updated_at))}` : ""}</span>
+      </span>
+    </label>
+  `).join("");
+  updateCanvasFileActions();
+}
+
+function updateCanvasFileActions() {
+  const count = canvasSelectedFiles.size;
+  const hasSelection = count > 0;
+  if (canvasPreviewFilesButton) canvasPreviewFilesButton.disabled = !hasSelection;
+  if (canvasAskFilesButton) canvasAskFilesButton.disabled = !hasSelection;
+  if (canvasGenerateFilesButton) canvasGenerateFilesButton.disabled = !hasSelection;
+}
+
+function updateCanvasPageActions() {
+  const hasSelection = canvasSelectedPages.size > 0;
+  if (canvasPreviewPagesButton) canvasPreviewPagesButton.disabled = !hasSelection;
+  if (canvasSuggestVideosButton) canvasSuggestVideosButton.disabled = !hasSelection;
+  if (canvasAskPagesButton) canvasAskPagesButton.disabled = !hasSelection;
+}
+
+async function previewSelectedCanvasFiles() {
+  const fileIds = getSelectedCanvasFileIds();
+  if (!fileIds.length) return;
+  setCanvasFilesStatus("Extracting text from selected files...");
+  canvasFilePreview.hidden = false;
+  canvasFilePreview.innerHTML = `<p class="muted">Parsing selected files...</p>`;
+  try {
+    const payload = await postCanvasFiles("/canvas/files/preview", { file_ids: fileIds });
+    canvasFilePreview.innerHTML = (payload.files || []).map(file => `
+      <details class="canvas-file-preview-item" open>
+        <summary>${escapeHtml(file.filename)} <span>${(file.character_count || 0).toLocaleString()} chars</span></summary>
+        <pre>${escapeHtml(file.text || "No readable text found.")}</pre>
+      </details>
+    `).join("");
+    setCanvasFilesStatus("");
+  } catch (err) {
+    setCanvasFilesStatus(err.message, true);
+  }
+}
+
+async function askValAboutSelectedFiles() {
+  const question = canvasChatInput.value.trim();
+  if (!question) {
+    setCanvasChatStatus("Type a question in the chat box first.", true);
+    canvasChatInput.focus();
+    return;
+  }
+  const fileIds = getSelectedCanvasFileIds();
+  if (!fileIds.length) return;
+  appendCanvasChatMessage("user", question);
+  canvasChatInput.value = "";
+  canvasAskFilesButton.disabled = true;
+  setCanvasChatStatus("Asking VAL about selected files...");
+  try {
+    const payload = await postCanvasFiles("/canvas/files/chat", { question, file_ids: fileIds });
+    appendCanvasChatMessage("assistant", payload.answer || "");
+    setCanvasChatStatus("");
+  } catch (err) {
+    setCanvasChatStatus(err.message, true);
+  } finally {
+    updateCanvasFileActions();
+  }
+}
+
+async function generateH5PFromSelectedFiles() {
+  const fileIds = getSelectedCanvasFileIds();
+  if (!fileIds.length) return;
+  canvasGenerateFilesButton.disabled = true;
+  setCanvasFilesStatus("Generating H5P from selected Canvas files...");
+  try {
+    const payload = await postCanvasFiles("/canvas/files/generate", {
+      file_ids: fileIds,
+      activity_type: canvasFileActivityType.value || "H5P.QuestionSet",
+      content_mode: "shared",
+      pass_percentage: 100,
+      paragraph_count: parseInt(paraCountInput.value, 10) || 4,
+    });
+    renderResults(payload);
+    recordGenerated((payload.results || []).length);
+    activateWorkspace("h5p");
+    window.history.pushState({}, "", "/h5p");
+    goToStep(2);
+    setCanvasFilesStatus("");
+  } catch (err) {
+    setCanvasFilesStatus(err.message, true);
+  } finally {
+    updateCanvasFileActions();
+  }
+}
+
+async function previewSelectedCanvasPages() {
+  const pageUrls = getSelectedCanvasPageUrls();
+  if (!pageUrls.length || !canvasCurrentCourseId) return;
+  setCanvasPagesStatus("Reading selected Canvas pages...");
+  canvasPagePreview.hidden = false;
+  canvasPagePreview.innerHTML = `<p class="muted">Loading page text...</p>`;
+  try {
+    const payload = await postCanvasFiles("/canvas/pages/preview", {
+      course_id: canvasCurrentCourseId,
+      course_name: canvasCurrentCourseName,
+      page_urls: pageUrls,
+    });
+    canvasPagePreview.innerHTML = (payload.pages || []).map(page => `
+      <details class="canvas-file-preview-item" open>
+        <summary>${escapeHtml(page.title || page.url)} <span>${(page.character_count || 0).toLocaleString()} chars</span></summary>
+        <pre>${escapeHtml(page.text || "No readable text found.")}</pre>
+      </details>
+    `).join("");
+    setCanvasPagesStatus("");
+  } catch (err) {
+    setCanvasPagesStatus(err.message, true);
+  }
+}
+
+async function suggestVideosForSelectedCanvasPages() {
+  const pageUrls = getSelectedCanvasPageUrls();
+  if (!pageUrls.length || !canvasCurrentCourseId) return;
+  setCanvasPagesStatus("Reading page content and searching YouTube...");
+  canvasPagePreview.hidden = false;
+  canvasPagePreview.innerHTML = `<p class="muted">Finding video suggestions...</p>`;
+  canvasSuggestVideosButton.disabled = true;
+  try {
+    const payload = await postCanvasFiles("/canvas/pages/youtube", {
+      course_id: canvasCurrentCourseId,
+      course_name: canvasCurrentCourseName,
+      page_urls: pageUrls,
+    });
+    canvasPagePreview.innerHTML = renderCanvasVideoSuggestions(payload.pages || []);
+    setCanvasPagesStatus("");
+    gtag("event", "canvas_page_youtube_suggestions", { page_count: pageUrls.length });
+  } catch (err) {
+    setCanvasPagesStatus(err.message, true);
+  } finally {
+    updateCanvasPageActions();
+  }
+}
+
+function renderCanvasVideoSuggestions(pages) {
+  if (!pages.length) return `<p class="muted">No page content was available to search from.</p>`;
+  return pages.map(page => `
+    <section class="canvas-video-suggestion-group">
+      <div class="canvas-video-suggestion-header">
+        <strong>${escapeHtml(page.title || page.url || "Canvas page")}</strong>
+        ${(page.search_queries || []).length
+          ? `<span>${escapeHtml((page.search_queries || []).slice(0, 2).join(" | "))}</span>`
+          : ""}
+      </div>
+      ${(page.embedded_youtube_links || []).length
+        ? `<div class="canvas-embedded-links">
+            <p class="muted">Embedded YouTube links found in Canvas:</p>
+            ${(page.embedded_youtube_links || []).map(link => `
+              <a href="${escapeHtml(link.watch_url || link.url)}" target="_blank" rel="noopener">${escapeHtml(link.watch_url || link.url)}</a>
+            `).join("")}
+          </div>`
+        : ""}
+      ${(page.videos || []).length
+        ? `<div class="canvas-video-suggestions">
+            ${(page.videos || []).map(video => renderCanvasVideoSuggestion(video)).join("")}
+          </div>`
+        : `<p class="muted">No YouTube suggestions were returned for this page.</p>`}
+    </section>
+  `).join("");
+}
+
+function renderCanvasVideoSuggestion(video) {
+  return `
+    <article class="canvas-video-suggestion">
+      ${renderYouTubePreview(video)}
+      <span class="youtube-video-meta">
+        <strong>${escapeHtml(video.title || "Untitled video")}</strong>
+        <span>${escapeHtml(formatYouTubeMeta(video))}</span>
+        ${video.search_query ? `<span>Search: ${escapeHtml(video.search_query)}</span>` : ""}
+        <span>${escapeHtml((video.description || "").slice(0, 180))}${(video.description || "").length > 180 ? "..." : ""}</span>
+        ${renderYouTubeVideoActions(video)}
+      </span>
+    </article>
+  `;
+}
+
+async function askValAboutSelectedPages() {
+  const question = canvasChatInput.value.trim();
+  if (!question) {
+    setCanvasChatStatus("Type a question in the chat box first.", true);
+    canvasChatInput.focus();
+    return;
+  }
+  const pageUrls = getSelectedCanvasPageUrls();
+  if (!pageUrls.length || !canvasCurrentCourseId) return;
+  appendCanvasChatMessage("user", question);
+  canvasChatInput.value = "";
+  canvasAskPagesButton.disabled = true;
+  setCanvasChatStatus("Asking VAL about selected pages...");
+  try {
+    const payload = await postCanvasFiles("/canvas/pages/chat", {
+      course_id: canvasCurrentCourseId,
+      course_name: canvasCurrentCourseName,
+      page_urls: pageUrls,
+      question,
+    });
+    appendCanvasChatMessage("assistant", payload.answer || "");
+    setCanvasChatStatus("");
+  } catch (err) {
+    setCanvasChatStatus(err.message, true);
+  } finally {
+    updateCanvasPageActions();
+  }
+}
+
+async function postCanvasFiles(path, body) {
+  const response = await canvasFetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const payload = await readResponsePayload(response);
+  if (!response.ok) throw new Error(extractErrorMessage(payload, "Canvas file action failed"));
+  return payload;
+}
+
+function getSelectedCanvasFileIds() {
+  return [...canvasSelectedFiles].map(id => parseInt(id, 10)).filter(Number.isFinite);
+}
+
+function getSelectedCanvasPageUrls() {
+  return [...canvasSelectedPages].filter(Boolean);
+}
+
+function setCanvasFilesStatus(message, isError = false) {
+  if (!canvasFilesStatus) return;
+  canvasFilesStatus.textContent = message;
+  canvasFilesStatus.style.color = isError ? "#b42318" : "";
+}
+
+function setCanvasPagesStatus(message, isError = false) {
+  if (!canvasPagesStatus) return;
+  canvasPagesStatus.textContent = message;
+  canvasPagesStatus.style.color = isError ? "#b42318" : "";
+}
+
+function formatFileSize(bytes) {
+  const n = Number(bytes);
+  if (!Number.isFinite(n) || n <= 0) return "size unknown";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function renderCanvasCourse(payload) {
+  const course = payload.course || {};
+  const summary = payload.summary || {};
+  canvasCourseDetail.innerHTML = `
+    <div class="canvas-course-title">
+      <div>
+        <p class="result-card-type">${escapeHtml(course.course_code || "Canvas course")}</p>
+        <h3>${escapeHtml(course.name || "Untitled course")}</h3>
+        <p class="muted">${escapeHtml(canvasCourseMeta(course))}</p>
+      </div>
+    </div>
+    <div class="canvas-summary-grid">
+      ${canvasStat("Students", course.total_students)}
+      ${canvasStat("Modules", `${summary.published_modules || 0}/${summary.modules || 0}`)}
+      ${canvasStat("Items", summary.module_items)}
+      ${canvasStat("Assignments", `${summary.published_assignments || 0}/${summary.assignments || 0}`)}
+      ${canvasStat("Sections", summary.sections)}
+      ${canvasStat("Pages", summary.pages)}
+    </div>
+    ${renderCanvasList("Teachers", payload.teachers, t => t.display_name)}
+    ${renderCanvasList("Sections", payload.sections, s => `${s.name}${s.total_students != null ? ` (${s.total_students})` : ""}`)}
+    ${renderCanvasList("Modules", payload.modules, m => `${m.name}${m.items_count ? ` (${m.items_count} items)` : ""}${m.published ? "" : " [unpublished]"}`)}
+    ${renderCanvasList("Assignments", payload.assignments, a => `${a.name}${a.points_possible != null ? ` - ${a.points_possible} pts` : ""}${a.due_at ? ` - due ${formatCanvasDate(a.due_at)}` : ""}`)}
+    ${renderCanvasList("Pages", payload.pages, p => `${p.title}${p.published ? "" : " [unpublished]"}`)}
+    ${renderCanvasList("Discussions", payload.discussions, d => `${d.title}${d.posted_at ? ` - ${formatCanvasDate(d.posted_at)}` : ""}`)}
+    ${renderCanvasList("Quizzes", payload.quizzes, q => `${q.title}${q.due_at ? ` - due ${formatCanvasDate(q.due_at)}` : ""}`)}
+  `;
+}
+
+function renderCanvasList(title, items, getText) {
+  const list = Array.isArray(items) ? items : [];
+  if (!list.length) return "";
+  return `
+    <details class="canvas-detail-group" open>
+      <summary>${escapeHtml(title)} <span>${list.length}</span></summary>
+      <ul>
+        ${list.slice(0, 30).map(item => `<li>${escapeHtml(getText(item) || "")}</li>`).join("")}
+      </ul>
+    </details>
+  `;
+}
+
+function canvasStat(label, value) {
+  return `
+    <div class="stat">
+      <strong>${escapeHtml(value == null || value === "" ? "0" : value)}</strong>
+      <span>${escapeHtml(label)}</span>
+    </div>
+  `;
+}
+
+function canvasCourseMeta(course) {
+  const parts = [
+    course.id ? `ID ${course.id}` : "",
+    course.course_code || "",
+    course.term?.name || "",
+    course.workflow_state || "",
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
+function extractCanvasCourseId(value) {
+  const text = String(value || "").trim();
+  const urlMatch = text.match(/\/courses\/(\d+)/i);
+  if (urlMatch) return urlMatch[1];
+  if (/^\d+$/.test(text)) return text;
+  return "";
+}
+
+function formatCanvasDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function setCanvasStatus(message, isError = false) {
+  canvasStatusEl.textContent = message;
+  canvasStatusEl.style.color = isError ? "#b42318" : "";
+}
+
+function updateCanvasChatContext() {
+  const count = canvasCourseContext.size;
+  if (canvasChatContext) {
+    canvasChatContext.textContent = `${count} course${count === 1 ? "" : "s"}`;
+  }
+  if (canvasChatButton) canvasChatButton.disabled = count === 0;
+}
+
+async function askCanvasChat() {
+  const question = canvasChatInput.value.trim();
+  if (!question) {
+    setCanvasChatStatus("Ask a question first.", true);
+    canvasChatInput.focus();
+    return;
+  }
+  const courses = [...canvasCourseContext.values()].map(course => {
+    const courseId = course.course?.id || course.id;
+    if (canvasCurrentCourseId && String(courseId) === String(canvasCurrentCourseId) && canvasSelectedPages.size) {
+      return { ...course, selected_page_urls: getSelectedCanvasPageUrls() };
+    }
+    return course;
+  });
+  if (!courses.length) {
+    setCanvasChatStatus("Search for or read at least one Canvas course first.", true);
+    return;
+  }
+
+  appendCanvasChatMessage("user", question);
+  canvasChatInput.value = "";
+  canvasChatButton.disabled = true;
+  setCanvasChatStatus("Asking VAL...");
+  try {
+    const response = await canvasFetch("/canvas/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, courses }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "VAL chat failed"));
+    appendCanvasChatMessage("assistant", payload.answer || "");
+    setCanvasChatStatus("");
+    gtag("event", "canvas_course_chat", { course_count: courses.length });
+  } catch (err) {
+    setCanvasChatStatus(err.message, true);
+  } finally {
+    updateCanvasChatContext();
+  }
+}
+
+function appendCanvasChatMessage(role, text) {
+  if (!canvasChatMessages) return;
+  const empty = canvasChatMessages.querySelector(":scope > .muted");
+  if (empty) empty.remove();
+  const article = document.createElement("article");
+  article.className = `canvas-chat-message ${role}`;
+  article.innerHTML = `
+    <strong>${role === "user" ? "You" : "VAL"}</strong>
+    <p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>
+  `;
+  canvasChatMessages.appendChild(article);
+  canvasChatMessages.scrollTop = canvasChatMessages.scrollHeight;
+}
+
+function setCanvasChatStatus(message, isError = false) {
+  if (!canvasChatStatus) return;
+  canvasChatStatus.textContent = message;
+  canvasChatStatus.style.color = isError ? "#b42318" : "";
+}
+
+// ── YouTube video search ───────────────────────────────────────────────
+let youtubeReady = false;
+const youtubeSelectedVideos = new Map();
+let youtubeLatestResults = [];
+let youtubeCanvasCourseContext = null;
+const videoSlotState = new Map();
+let youtubeContentChosen = false;
+
+initYouTubeSearch();
+
+function updateYoutubeStepIndicator(step) {
+  youtubeStepPills.forEach((pill, i) => {
+    if (!pill) return;
+    const n = i + 1;
+    pill.classList.toggle("active", n === step);
+    pill.classList.toggle("done", n < step);
+  });
+}
+
+function setYoutubeConnectSummary(text) {
+  if (youtubeConnectSummaryText) youtubeConnectSummaryText.textContent = text;
+  if (youtubeConnectSummary) youtubeConnectSummary.hidden = false;
+  if (youtubeConnectForm) youtubeConnectForm.hidden = true;
+}
+
+function resetYoutubeConnectSummary() {
+  if (youtubeConnectSummary) youtubeConnectSummary.hidden = true;
+  if (youtubeConnectForm) youtubeConnectForm.hidden = false;
+}
+
+function setYoutubeContentSummary(text) {
+  if (youtubeContentSummaryText) youtubeContentSummaryText.textContent = text;
+  if (youtubeContentSummary) youtubeContentSummary.hidden = false;
+  if (youtubeContentForm) youtubeContentForm.hidden = true;
+}
+
+function resetYoutubeContentSummary() {
+  if (youtubeContentSummary) youtubeContentSummary.hidden = true;
+  if (youtubeContentForm) youtubeContentForm.hidden = false;
+}
+
+function initYouTubeSearch() {
+  if (!youtubeSearchButton || !youtubeSearchInput) return;
+  youtubeSearchButton.addEventListener("click", runYouTubeSearch);
+  youtubeSearchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runYouTubeSearch();
+    }
+  });
+  if (youtubeResults) {
+    youtubeResults.addEventListener("change", (e) => {
+      const input = e.target.closest('input[type="checkbox"][data-video-id]');
+      if (!input) return;
+      const video = youtubeLatestResults.find(item => item.id === input.dataset.videoId);
+      if (input.checked && video) youtubeSelectedVideos.set(video.id, video);
+      else youtubeSelectedVideos.delete(input.dataset.videoId);
+      updateYouTubeSelection();
+    });
+    youtubeResults.addEventListener("click", (e) => {
+      const copyButton = e.target.closest("[data-copy-youtube-embed]");
+      if (copyButton) {
+        handleYouTubeEmbedCopy(e);
+        return;
+      }
+      const link = e.target.closest("a[data-video-link]");
+      if (link) gtag("event", "youtube_video_opened", { video_id: link.dataset.videoLink });
+    });
+  }
+  if (youtubeChatButton) youtubeChatButton.addEventListener("click", askValAboutSelectedVideos);
+  if (youtubeCanvasCourseSearchButton) {
+    youtubeCanvasCourseSearchButton.addEventListener("click", runYouTubeCanvasCourseSearch);
+  }
+  if (youtubeCanvasCourseSearch) {
+    youtubeCanvasCourseSearch.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        runYouTubeCanvasCourseSearch();
+      }
+    });
+  }
+  if (youtubeCanvasCourseResults) {
+    youtubeCanvasCourseResults.addEventListener("click", (e) => {
+      const button = e.target.closest("button[data-youtube-canvas-course-id]");
+      if (button) loadYouTubeCanvasCourse(button.dataset.youtubeCanvasCourseId);
+    });
+  }
+  if (youtubeCanvasSuggestButton) {
+    youtubeCanvasSuggestButton.addEventListener("click", suggestVideoSlotsFromCanvasContent);
+  }
+  if (youtubeSlotResults) {
+    youtubeSlotResults.addEventListener("change", (e) => {
+      const input = e.target.closest("input[data-slot-video-id]");
+      if (input) handleVideoSlotSelectionChange(input);
+    });
+    youtubeSlotResults.addEventListener("click", (e) => {
+      const toggleButton = e.target.closest("[data-slot-toggle]");
+      if (toggleButton) {
+        toggleVideoSlotCard(toggleButton.closest(".video-slot-card"));
+        return;
+      }
+      const htmlToggleButton = e.target.closest("[data-slot-html-toggle]");
+      if (htmlToggleButton) {
+        toggleVideoSlotHtmlSource(htmlToggleButton.closest(".video-slot-card"));
+        return;
+      }
+      const previewButton = e.target.closest("[data-preview-slot]");
+      if (previewButton) {
+        previewVideoSlot(previewButton.closest(".video-slot-card"));
+        return;
+      }
+      const pushButton = e.target.closest("[data-push-slot]");
+      if (pushButton) {
+        pushVideoSlot(pushButton.closest(".video-slot-card"));
+        return;
+      }
+      const revertButton = e.target.closest("[data-revert-slot]");
+      if (revertButton) {
+        revertVideoSlot(revertButton.closest(".video-slot-card"));
+        return;
+      }
+      const refineButton = e.target.closest("[data-refine-slot-search]");
+      if (refineButton) {
+        refineVideoSlotSearch(refineButton.closest(".video-slot-card"));
+        return;
+      }
+      const copyButton = e.target.closest("[data-copy-youtube-embed]");
+      if (copyButton) handleYouTubeEmbedCopy(e);
+    });
+  }
+  if (youtubeChatInput) {
+    youtubeChatInput.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        askValAboutSelectedVideos();
+      }
+    });
+  }
+  if (youtubeConnectChangeButton) {
+    youtubeConnectChangeButton.addEventListener("click", () => {
+      resetYoutubeConnectSummary();
+      updateYoutubeStepIndicator(1);
+    });
+  }
+  if (youtubeContentChangeButton) {
+    youtubeContentChangeButton.addEventListener("click", () => {
+      resetYoutubeContentSummary();
+      updateYoutubeStepIndicator(2);
+    });
+  }
+  if (youtubeManualToggle && youtubeManualPanel) {
+    youtubeManualToggle.addEventListener("click", () => {
+      const expanded = !youtubeManualPanel.hidden;
+      youtubeManualPanel.hidden = expanded;
+      youtubeManualToggle.setAttribute("aria-expanded", String(!expanded));
+      youtubeManualToggle.textContent = expanded ? "Or search YouTube directly ›" : "Hide manual YouTube search ‹";
+    });
+  }
+  updateYoutubeStepIndicator(canvasReady ? (youtubeContentChosen ? 3 : 2) : 1);
+  refreshYouTubeStatus();
+  updateYouTubeSelection();
+}
+
+async function refreshYouTubeStatus() {
+  try {
+    const response = await fetch(`${API_BASE}/youtube/status`);
+    const payload = await readResponsePayload(response);
+    youtubeReady = Boolean(payload.configured);
+    youtubeStatusBadge.textContent = youtubeReady ? "Connected" : "Not configured";
+    youtubeStatusBadge.classList.toggle("canvas-badge-ready", youtubeReady);
+    youtubeStatusBadge.classList.toggle("canvas-badge-off", !youtubeReady);
+    youtubeStatusEl.textContent = youtubeReady
+      ? "Search public YouTube videos without exposing the API key."
+      : "Set YOUTUBE_API_KEY on the server to enable YouTube search.";
+    youtubeSearchButton.disabled = !youtubeReady;
+    updateYouTubeCanvasSuggestButton();
+  } catch {
+    youtubeReady = false;
+    youtubeStatusBadge.textContent = "Unavailable";
+    youtubeStatusBadge.classList.add("canvas-badge-off");
+    youtubeStatusEl.textContent = "YouTube status could not be checked.";
+    youtubeSearchButton.disabled = true;
+    updateYouTubeCanvasSuggestButton();
+  }
+}
+
+async function runYouTubeCanvasCourseSearch() {
+  if (!canvasReady) {
+    setYouTubeCanvasSourceStatus("Connect your Canvas account first.", true);
+    return;
+  }
+  const query = (youtubeCanvasCourseSearch?.value || "").trim();
+  if (query.length < 2) {
+    setYouTubeCanvasSourceStatus("Enter a course name, code, URL, or ID.", true);
+    return;
+  }
+  const directCourseId = extractCanvasCourseId(query);
+  if (directCourseId) {
+    await loadYouTubeCanvasCourse(directCourseId);
+    return;
+  }
+
+  youtubeCanvasCourseSearchButton.disabled = true;
+  setYouTubeCanvasSourceStatus("Searching Canvas courses...");
+  youtubeCanvasCourseResults.innerHTML = "";
+  youtubeCanvasSourcePicker.hidden = true;
+  try {
+    const response = await canvasFetch(`/canvas/courses/search?q=${encodeURIComponent(query)}&limit=20`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Canvas search failed"));
+    renderYouTubeCanvasCourseResults(payload.results || []);
+    setYouTubeCanvasSourceStatus((payload.results || []).length ? "" : "No matching courses found.");
+  } catch (err) {
+    setYouTubeCanvasSourceStatus(err.message, true);
+  } finally {
+    youtubeCanvasCourseSearchButton.disabled = false;
+  }
+}
+
+function renderYouTubeCanvasCourseResults(courses) {
+  youtubeCanvasCourseResults.innerHTML = courses.map(course => `
+    <article class="canvas-result">
+      <div>
+        <strong>${escapeHtml(course.name || "Untitled course")}</strong>
+        <span>${escapeHtml(canvasCourseMeta(course))}</span>
+      </div>
+      <button type="button" class="secondary" data-youtube-canvas-course-id="${escapeHtml(course.id)}">Choose</button>
+    </article>
+  `).join("");
+}
+
+async function loadYouTubeCanvasCourse(courseId) {
+  setYouTubeCanvasSourceStatus(`Reading Canvas course ${courseId}...`);
+  youtubeCanvasSourcePicker.hidden = true;
+  try {
+    const response = await canvasFetch(`/canvas/courses/${encodeURIComponent(courseId)}`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Could not read Canvas course"));
+    youtubeCanvasCourseContext = payload;
+    renderYouTubeCanvasSources(payload);
+    setYouTubeCanvasSourceStatus("");
+  } catch (err) {
+    setYouTubeCanvasSourceStatus(err.message, true);
+  }
+}
+
+function renderYouTubeCanvasSources(payload) {
+  const course = payload.course || {};
+  const modules = (payload.modules || []).filter(module =>
+    (module.items || []).some(item => item.type === "Page" && item.page_url)
+  );
+  const pages = payload.pages || [];
+  youtubeCanvasCourseTitle.textContent = course.name || "Canvas course";
+  youtubeCanvasModuleList.innerHTML = modules.length
+    ? modules.map(module => {
+        const pageCount = (module.items || []).filter(item => item.type === "Page" && item.page_url).length;
+        return `<label class="canvas-source-option">
+          <input type="checkbox" data-youtube-canvas-module-id="${escapeHtml(module.id)}">
+          <span><strong>${escapeHtml(module.name || "Untitled module")}</strong><small>${pageCount} readable page${pageCount === 1 ? "" : "s"}</small></span>
+        </label>`;
+      }).join("")
+    : `<p class="muted">No modules with readable pages.</p>`;
+  youtubeCanvasPageList.innerHTML = pages.length
+    ? pages.map(page => `<label class="canvas-source-option">
+        <input type="checkbox" data-youtube-canvas-page-url="${escapeHtml(page.url || "")}">
+        <span><strong>${escapeHtml(page.title || page.url || "Untitled page")}</strong><small>${page.published ? "Published" : "Unpublished"}</small></span>
+      </label>`).join("")
+    : `<p class="muted">No readable course pages.</p>`;
+  youtubeCanvasCourseResults.innerHTML = "";
+  youtubeCanvasSourcePicker.hidden = false;
+  updateYouTubeCanvasSuggestButton();
+}
+
+function updateYouTubeCanvasSuggestButton() {
+  if (!youtubeCanvasSuggestButton) return;
+  youtubeCanvasSuggestButton.disabled = !youtubeReady || !canvasReady || !youtubeCanvasCourseContext;
+  youtubeCanvasSuggestButton.title = !youtubeReady ? "YouTube search is not configured on this server" : "";
+}
+
+function currentAqfLevel() {
+  const raw = youtubeAqfLevelSelect ? youtubeAqfLevelSelect.value : "";
+  const parsed = parseInt(raw, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function suggestVideoSlotsFromCanvasContent() {
+  if (!youtubeCanvasCourseContext || !youtubeReady || !canvasReady) return;
+  const course = youtubeCanvasCourseContext.course || {};
+  const moduleIds = [...youtubeCanvasModuleList.querySelectorAll("[data-youtube-canvas-module-id]:checked")]
+    .map(input => parseInt(input.dataset.youtubeCanvasModuleId, 10))
+    .filter(Number.isFinite);
+  const pageUrls = [...youtubeCanvasPageList.querySelectorAll("[data-youtube-canvas-page-url]:checked")]
+    .map(input => input.dataset.youtubeCanvasPageUrl)
+    .filter(Boolean);
+
+  let resolvedPageUrls = pageUrls;
+  if (moduleIds.length) {
+    const modulePageUrls = (youtubeCanvasCourseContext.modules || [])
+      .filter(module => moduleIds.includes(module.id))
+      .flatMap(module => (module.items || []).filter(item => item.type === "Page" && item.page_url).map(item => item.page_url));
+    resolvedPageUrls = [...new Set([...resolvedPageUrls, ...modulePageUrls])];
+  }
+  if (!resolvedPageUrls.length) {
+    resolvedPageUrls = (youtubeCanvasCourseContext.pages || []).map(page => page.url).filter(Boolean);
+  }
+  if (!resolvedPageUrls.length) {
+    setYouTubeCanvasSourceStatus("No readable Canvas pages were found for that selection.", true);
+    return;
+  }
+
+  youtubeCanvasSuggestButton.disabled = true;
+  setYouTubeCanvasSourceStatus("Reading Canvas content and finding relevant videos...");
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: course.id,
+        course_name: course.name || "",
+        page_urls: resolvedPageUrls.slice(0, 10),
+        aqf_level: currentAqfLevel(),
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Video suggestions failed"));
+    const pages = payload.pages || [];
+    renderVideoSlots(course.id, pages);
+    const slotCount = pages.reduce((sum, page) => sum + (page.slots || []).length, 0);
+    setYouTubeCanvasSourceStatus(
+      slotCount
+        ? `${slotCount} video slot${slotCount === 1 ? "" : "s"} found across ${pages.length} Canvas page${pages.length === 1 ? "" : "s"}.`
+        : "No video slots or suggestions were found for the selected Canvas content."
+    );
+    youtubeContentChosen = true;
+    const aqfLabel = youtubeAqfLevelSelect?.selectedOptions[0]?.textContent || "";
+    setYoutubeContentSummary(
+      `Course: ${course.name || "Untitled"} · ${pages.length} page${pages.length === 1 ? "" : "s"}` +
+      (aqfLabel && aqfLabel !== "Not specified" ? ` · ${aqfLabel}` : "")
+    );
+    updateYoutubeStepIndicator(3);
+    if (youtubeSlotPanel) youtubeSlotPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    gtag("event", "youtube_canvas_video_slots", { page_count: pages.length, slot_count: slotCount });
+  } catch (err) {
+    setYouTubeCanvasSourceStatus(err.message, true);
+  } finally {
+    updateYouTubeCanvasSuggestButton();
+  }
+}
+
+function renderVideoSlotCarouselItems(videos) {
+  return videos.map(video => `
+    <label class="video-slot-carousel-item">
+      <input type="checkbox" data-slot-video-id="${escapeHtml(video.id)}">
+      ${renderYouTubePreview(video)}
+      <span class="video-slot-carousel-meta">
+        <strong>${escapeHtml(video.title || "Untitled video")}</strong>
+        <span class="video-slot-carousel-desc">${escapeHtml((video.description || "").slice(0, 200))}${(video.description || "").length > 200 ? "..." : ""}</span>
+        ${renderYouTubeVideoActions(video, false)}
+      </span>
+    </label>
+  `).join("") || `<p class="muted">No candidate videos were found for this slot.</p>`;
+}
+
+function renderVideoSlots(courseId, pages) {
+  videoSlotState.clear();
+  const cards = [];
+  pages.forEach(page => {
+    (page.slots || []).forEach(slot => {
+      const key = `${page.url}::${slot.index}`;
+      videoSlotState.set(key, {
+        courseId,
+        pageUrl: page.url,
+        slotIndex: slot.index,
+        videosById: new Map((slot.videos || []).map(video => [video.id, video])),
+        selected: new Set(),
+        preview: null,
+        revertRevisionId: null,
+        alreadyFilled: Boolean(slot.already_filled),
+      });
+      const snippet = (slot.original_description_text || slot.search_query || "").slice(0, 90);
+      const startBadge = slot.already_filled ? "Has a video · pick a replacement" : "Not started";
+      cards.push(`
+        <article class="video-slot-card" data-slot-key="${escapeHtml(key)}">
+          <button type="button" class="video-slot-header" data-slot-toggle aria-expanded="false">
+            <span class="video-slot-header-text">
+              <strong>${escapeHtml(page.title || page.url || "Canvas page")}</strong>
+              <span class="muted">${escapeHtml(snippet)}${snippet.length >= 90 ? "..." : ""}</span>
+            </span>
+            <span class="video-slot-badge" data-slot-badge>${escapeHtml(startBadge)}</span>
+          </button>
+          <div class="video-slot-body" data-slot-body hidden>
+            <div>
+              ${slot.original_description_text ? `<p class="video-slot-original">${escapeHtml(slot.original_description_text)}</p>` : ""}
+              <p class="muted" data-slot-search-used>Search used: ${escapeHtml(slot.search_query || "(none)")}</p>
+            </div>
+            <div class="video-slot-carousel" data-slot-carousel>
+              ${renderVideoSlotCarouselItems(slot.videos || [])}
+            </div>
+            <div class="video-slot-refine">
+              <label>
+                <span>Add context to refine this search</span>
+                <textarea data-slot-context rows="2" placeholder="e.g. focus on a specific brand, shorter video, more about PPE..."></textarea>
+              </label>
+              <button type="button" class="secondary" data-refine-slot-search>Refine search</button>
+              <span class="status" data-slot-refine-status></span>
+            </div>
+            <div class="video-slot-actions">
+              <button type="button" class="secondary" data-preview-slot disabled>Preview Canvas update</button>
+              <button type="button" data-push-slot disabled>Push to Canvas</button>
+              <button type="button" class="secondary" data-revert-slot hidden>Revert this change</button>
+              <span class="status" data-slot-status></span>
+            </div>
+            <div class="video-slot-preview-wrap" data-slot-preview-wrap hidden>
+              <button type="button" class="video-slot-html-toggle" data-slot-html-toggle aria-expanded="false">View HTML source</button>
+              <iframe class="video-slot-preview-frame" data-slot-preview-frame sandbox="allow-scripts allow-same-origin allow-popups" title="Canvas update preview" hidden></iframe>
+              <div class="video-slot-preview" data-slot-preview hidden></div>
+            </div>
+          </div>
+        </article>
+      `);
+    });
+  });
+  youtubeSlotResults.innerHTML = cards.join("") || `<p class="muted">No video slots or suggestions were found for the selected Canvas content.</p>`;
+  if (youtubeSlotPanel) youtubeSlotPanel.hidden = false;
+}
+
+function toggleVideoSlotCard(card) {
+  if (!card) return;
+  const toggleButton = card.querySelector("[data-slot-toggle]");
+  const body = card.querySelector("[data-slot-body]");
+  if (!toggleButton || !body) return;
+  const expanded = toggleButton.getAttribute("aria-expanded") === "true";
+  toggleButton.setAttribute("aria-expanded", String(!expanded));
+  body.hidden = expanded;
+}
+
+function toggleVideoSlotHtmlSource(card) {
+  if (!card) return;
+  const toggleButton = card.querySelector("[data-slot-html-toggle]");
+  const sourceEl = card.querySelector("[data-slot-preview]");
+  if (!toggleButton || !sourceEl) return;
+  const expanded = toggleButton.getAttribute("aria-expanded") === "true";
+  toggleButton.setAttribute("aria-expanded", String(!expanded));
+  toggleButton.textContent = expanded ? "View HTML source" : "Hide HTML source";
+  sourceEl.hidden = expanded;
+}
+
+function setVideoSlotBadge(card, text) {
+  const badge = card.querySelector("[data-slot-badge]");
+  if (badge) badge.textContent = text;
+}
+
+function handleVideoSlotSelectionChange(input) {
+  const card = input.closest(".video-slot-card");
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state) return;
+  const videoId = input.dataset.slotVideoId;
+  if (input.checked) state.selected.add(videoId);
+  else state.selected.delete(videoId);
+
+  state.preview = null;
+  const previewWrap = card.querySelector("[data-slot-preview-wrap]");
+  const pushButton = card.querySelector("[data-push-slot]");
+  const previewButton = card.querySelector("[data-preview-slot]");
+  const statusEl = card.querySelector("[data-slot-status]");
+  if (previewWrap) previewWrap.hidden = true;
+  if (pushButton) pushButton.disabled = true;
+  if (previewButton) previewButton.disabled = state.selected.size === 0;
+  if (statusEl) statusEl.textContent = "";
+  const idleBadge = state.alreadyFilled ? "Has a video · pick a replacement" : "Not started";
+  setVideoSlotBadge(card, state.selected.size ? `${state.selected.size} selected` : idleBadge);
+}
+
+async function previewVideoSlot(card) {
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state) return;
+  const videos = [...state.selected].map(id => state.videosById.get(id)).filter(Boolean);
+  if (!videos.length) return;
+
+  const previewButton = card.querySelector("[data-preview-slot]");
+  const pushButton = card.querySelector("[data-push-slot]");
+  const previewWrap = card.querySelector("[data-slot-preview-wrap]");
+  const previewFrame = card.querySelector("[data-slot-preview-frame]");
+  const previewSource = card.querySelector("[data-slot-preview]");
+  const statusEl = card.querySelector("[data-slot-status]");
+  previewButton.disabled = true;
+  pushButton.disabled = true;
+  statusEl.style.color = "";
+  statusEl.textContent = "Generating preview with VAL...";
+  setVideoSlotBadge(card, "Generating preview...");
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: state.courseId,
+        page_url: state.pageUrl,
+        slot_index: state.slotIndex,
+        videos,
+        aqf_level: currentAqfLevel(),
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Preview failed"));
+    state.preview = { updatedBody: payload.updated_body, expectedUpdatedAt: payload.expected_updated_at };
+    if (previewFrame) {
+      previewFrame.srcdoc = payload.preview_standalone_html || "";
+      previewFrame.hidden = false;
+    }
+    if (previewSource) previewSource.textContent = payload.preview_html || "";
+    if (previewWrap) previewWrap.hidden = false;
+    statusEl.textContent = "Preview ready. Review it above, then push to Canvas.";
+    pushButton.disabled = false;
+    setVideoSlotBadge(card, "Previewed");
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.color = "#b42318";
+    setVideoSlotBadge(card, "Preview failed");
+  } finally {
+    previewButton.disabled = false;
+  }
+}
+
+async function pushVideoSlot(card) {
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state || !state.preview) return;
+  const confirmed = window.confirm(
+    `This overwrites the video section on the live Canvas page "${state.pageUrl}". You can revert it afterwards if needed. Continue?`
+  );
+  if (!confirmed) return;
+
+  const pushButton = card.querySelector("[data-push-slot]");
+  const previewButton = card.querySelector("[data-preview-slot]");
+  const revertButton = card.querySelector("[data-revert-slot]");
+  const statusEl = card.querySelector("[data-slot-status]");
+  pushButton.disabled = true;
+  statusEl.style.color = "";
+  statusEl.textContent = "Pushing update to Canvas...";
+  setVideoSlotBadge(card, "Pushing...");
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: state.courseId,
+        page_url: state.pageUrl,
+        updated_body: state.preview.updatedBody,
+        expected_updated_at: state.preview.expectedUpdatedAt,
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Push to Canvas failed"));
+    statusEl.textContent = "Pushed to Canvas successfully.";
+    statusEl.style.color = "#12794b";
+    state.preview = null;
+    previewButton.disabled = true;
+    setVideoSlotBadge(card, "Pushed");
+    if (payload.revert_revision_id && revertButton) {
+      state.revertRevisionId = payload.revert_revision_id;
+      revertButton.hidden = false;
+      revertButton.disabled = false;
+    }
+    gtag("event", "youtube_slot_pushed_to_canvas", { page_url: state.pageUrl, slot_index: state.slotIndex });
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.color = "#b42318";
+    pushButton.disabled = false;
+    setVideoSlotBadge(card, "Push failed");
+  }
+}
+
+async function revertVideoSlot(card) {
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state || !state.revertRevisionId) return;
+  const confirmed = window.confirm(
+    `This restores the Canvas page "${state.pageUrl}" to the version before your last push. Continue?`
+  );
+  if (!confirmed) return;
+
+  const revertButton = card.querySelector("[data-revert-slot]");
+  const statusEl = card.querySelector("[data-slot-status]");
+  revertButton.disabled = true;
+  statusEl.style.color = "";
+  statusEl.textContent = "Reverting Canvas page...";
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots/revert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: state.courseId,
+        page_url: state.pageUrl,
+        revision_id: state.revertRevisionId,
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Revert failed"));
+    statusEl.textContent = "Reverted to the previous version.";
+    statusEl.style.color = "#12794b";
+    state.revertRevisionId = null;
+    revertButton.hidden = true;
+    setVideoSlotBadge(card, "Reverted");
+    gtag("event", "youtube_slot_reverted", { page_url: state.pageUrl, slot_index: state.slotIndex });
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.color = "#b42318";
+    revertButton.disabled = false;
+  }
+}
+
+async function refineVideoSlotSearch(card) {
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state) return;
+  const textarea = card.querySelector("[data-slot-context]");
+  const additionalContext = (textarea?.value || "").trim();
+  const refineButton = card.querySelector("[data-refine-slot-search]");
+  const statusEl = card.querySelector("[data-slot-refine-status]");
+  const carousel = card.querySelector("[data-slot-carousel]");
+  const searchUsedEl = card.querySelector("[data-slot-search-used]");
+
+  refineButton.disabled = true;
+  statusEl.style.color = "";
+  statusEl.textContent = "Refining search with VAL...";
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots/refine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: state.courseId,
+        page_url: state.pageUrl,
+        slot_index: state.slotIndex,
+        additional_context: additionalContext,
+        aqf_level: currentAqfLevel(),
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Refine failed"));
+
+    const videos = payload.videos || [];
+    state.videosById = new Map(videos.map(video => [video.id, video]));
+    state.selected.clear();
+    state.preview = null;
+    if (carousel) carousel.innerHTML = renderVideoSlotCarouselItems(videos);
+    if (searchUsedEl) searchUsedEl.textContent = `Search used: ${payload.search_query || "(none)"}`;
+
+    const previewWrap = card.querySelector("[data-slot-preview-wrap]");
+    if (previewWrap) previewWrap.hidden = true;
+    const pushButton = card.querySelector("[data-push-slot]");
+    if (pushButton) pushButton.disabled = true;
+    const previewButton = card.querySelector("[data-preview-slot]");
+    if (previewButton) previewButton.disabled = true;
+
+    setVideoSlotBadge(card, videos.length ? "Refined · pick a video" : "No results");
+    statusEl.textContent = videos.length ? "Search refined." : "No matching videos found.";
+    gtag("event", "youtube_slot_refined", { page_url: state.pageUrl, slot_index: state.slotIndex });
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.color = "#b42318";
+  } finally {
+    refineButton.disabled = false;
+  }
+}
+
+function resetYouTubeCanvasSource() {
+  youtubeCanvasCourseContext = null;
+  if (youtubeCanvasCourseResults) youtubeCanvasCourseResults.innerHTML = "";
+  if (youtubeCanvasSourcePicker) youtubeCanvasSourcePicker.hidden = true;
+  if (youtubeCanvasModuleList) youtubeCanvasModuleList.innerHTML = "";
+  if (youtubeCanvasPageList) youtubeCanvasPageList.innerHTML = "";
+  if (youtubeCanvasSourceStatus) youtubeCanvasSourceStatus.textContent = "";
+  videoSlotState.clear();
+  if (youtubeSlotResults) youtubeSlotResults.innerHTML = "";
+  if (youtubeSlotPanel) youtubeSlotPanel.hidden = true;
+  youtubeContentChosen = false;
+  resetYoutubeContentSummary();
+  updateYoutubeStepIndicator(1);
+  updateYouTubeCanvasSuggestButton();
+}
+
+function setYouTubeCanvasSourceStatus(message, isError = false) {
+  if (!youtubeCanvasSourceStatus) return;
+  youtubeCanvasSourceStatus.textContent = message;
+  youtubeCanvasSourceStatus.style.color = isError ? "#b42318" : "";
+}
+
+async function runYouTubeSearch(queryOverride) {
+  if (!youtubeReady) return;
+  const query = (queryOverride ?? youtubeSearchInput.value).trim();
+  if (query.length < 2) {
+    setYouTubeStatus("Enter at least 2 characters to search.", true);
+    return;
+  }
+  if (queryOverride !== undefined) youtubeSearchInput.value = query;
+
+  youtubeSearchButton.disabled = true;
+  setYouTubeStatus("Searching YouTube...");
+  youtubeResults.innerHTML = "";
+  try {
+    const response = await fetch(`${API_BASE}/youtube/search?q=${encodeURIComponent(query)}&limit=8`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "YouTube search failed"));
+    youtubeLatestResults = payload.results || [];
+    renderYouTubeResults(youtubeLatestResults);
+    setYouTubeStatus(youtubeLatestResults.length ? "" : "No matching videos found.");
+    gtag("event", "youtube_search", { result_count: youtubeLatestResults.length });
+    if (queryOverride !== undefined) youtubeResults.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    setYouTubeStatus(err.message, true);
+  } finally {
+    youtubeSearchButton.disabled = !youtubeReady;
+  }
+}
+
+function renderYouTubeResults(videos) {
+  youtubeResults.innerHTML = videos.map(video => `
+    <label class="youtube-result">
+      <input type="checkbox" data-video-id="${escapeHtml(video.id)}" ${youtubeSelectedVideos.has(video.id) ? "checked" : ""}>
+      ${renderYouTubePreview(video)}
+      <span class="youtube-video-meta">
+        <strong>${escapeHtml(video.title || "Untitled video")}</strong>
+        <span>${escapeHtml(formatYouTubeMeta(video))}</span>
+        ${video.canvas_source ? `<span>Suggested from: ${escapeHtml(video.canvas_source)}</span>` : ""}
+        <span>${escapeHtml((video.description || "").slice(0, 220))}${(video.description || "").length > 220 ? "..." : ""}</span>
+        ${renderYouTubeVideoActions(video, true)}
+      </span>
+    </label>
+  `).join("");
+}
+
+function updateYouTubeSelection() {
+  const count = youtubeSelectedVideos.size;
+  if (youtubeSelectedCount) youtubeSelectedCount.textContent = `${count} video${count === 1 ? "" : "s"}`;
+  if (youtubeChatButton) youtubeChatButton.disabled = count === 0;
+}
+
+async function askValAboutSelectedVideos() {
+  const question = youtubeChatInput.value.trim();
+  if (!question) {
+    setYouTubeChatStatus("Ask a question first.", true);
+    youtubeChatInput.focus();
+    return;
+  }
+  const videos = [...youtubeSelectedVideos.values()];
+  if (!videos.length) {
+    setYouTubeChatStatus("Select at least one video first.", true);
+    return;
+  }
+
+  appendYouTubeChatMessage("user", question);
+  youtubeChatInput.value = "";
+  youtubeChatButton.disabled = true;
+  setYouTubeChatStatus("Asking VAL about selected videos...");
+  try {
+    const response = await fetch(`${API_BASE}/youtube/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, videos }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "VAL video chat failed"));
+    appendYouTubeChatMessage("assistant", payload.answer || "");
+    if (payload.refined_query) {
+      appendYouTubeChatMessage("assistant", `Refining search: "${payload.refined_query}"...`);
+      await runYouTubeSearch(payload.refined_query);
+    }
+    setYouTubeChatStatus("");
+    gtag("event", "youtube_video_chat", { video_count: videos.length, refined: Boolean(payload.refined_query) });
+  } catch (err) {
+    setYouTubeChatStatus(err.message, true);
+  } finally {
+    updateYouTubeSelection();
+  }
+}
+
+function appendYouTubeChatMessage(role, text) {
+  if (!youtubeChatMessages) return;
+  const empty = youtubeChatMessages.querySelector(":scope > .muted");
+  if (empty) empty.remove();
+  const article = document.createElement("article");
+  article.className = `canvas-chat-message ${role}`;
+  article.innerHTML = `
+    <strong>${role === "user" ? "You" : "VAL"}</strong>
+    <p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>
+  `;
+  youtubeChatMessages.appendChild(article);
+  youtubeChatMessages.scrollTop = youtubeChatMessages.scrollHeight;
+}
+
+function setYouTubeStatus(message, isError = false) {
+  if (!youtubeStatusEl) return;
+  youtubeStatusEl.textContent = message;
+  youtubeStatusEl.style.color = isError ? "#b42318" : "";
+}
+
+function setYouTubeChatStatus(message, isError = false) {
+  if (!youtubeChatStatus) return;
+  youtubeChatStatus.textContent = message;
+  youtubeChatStatus.style.color = isError ? "#b42318" : "";
+}
+
+function formatYouTubeMeta(video) {
+  const parts = [
+    video.channel_title || "",
+    video.published_at ? formatCanvasDate(video.published_at) : "",
+    video.duration ? formatYouTubeDuration(video.duration) : "",
+    video.view_count != null ? `${Number(video.view_count).toLocaleString()} views` : "",
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
+function formatYouTubeDuration(value) {
+  const match = String(value).match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
+  if (!match) return value;
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  const seconds = parseInt(match[3] || "0", 10);
+  const paddedSeconds = String(seconds).padStart(2, "0");
+  if (hours) return `${hours}:${String(minutes).padStart(2, "0")}:${paddedSeconds}`;
+  return `${minutes}:${paddedSeconds}`;
+}
+
+function renderYouTubePreview(video) {
+  const videoId = String(video.id || "").trim();
+  if (!videoId) {
+    return `
+      <span class="youtube-preview-wrap">
+        <span class="youtube-thumb-placeholder">YT</span>
+      </span>
+    `;
+  }
+  return `
+    <span class="youtube-preview-wrap">
+      <iframe
+        src="${escapeHtml(youtubeEmbedUrl(videoId))}"
+        title="${escapeHtml(video.title || "YouTube video preview")}"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen></iframe>
+    </span>
+  `;
+}
+
+function renderYouTubeVideoActions(video, trackOpen = false) {
+  const videoId = String(video.id || "").trim();
+  const title = video.title || "YouTube video";
+  return `
+    <span class="youtube-video-actions">
+      <a href="${escapeHtml(video.url)}" target="_blank" rel="noopener" ${trackOpen ? `data-video-link="${escapeHtml(videoId)}"` : ""}>Open video</a>
+      ${videoId
+        ? `<button type="button" class="youtube-embed-copy" data-copy-youtube-embed="${escapeHtml(videoId)}" data-video-title="${escapeHtml(title)}" title="Copy embed code" aria-label="Copy embed code">&lt;/&gt;</button>`
+        : ""}
+    </span>
+  `;
+}
+
+async function handleYouTubeEmbedCopy(event) {
+  const button = event.target.closest("[data-copy-youtube-embed]");
+  if (!button) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const videoId = button.dataset.copyYoutubeEmbed || "";
+  const title = button.dataset.videoTitle || "YouTube video";
+  const code = youtubeEmbedCode(videoId, title);
+  try {
+    await navigator.clipboard.writeText(code);
+    showEmbedCopied(button);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = code;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+    showEmbedCopied(button);
+  }
+}
+
+function showEmbedCopied(button) {
+  const original = button.innerHTML;
+  button.innerHTML = "OK";
+  button.classList.add("copied");
+  setTimeout(() => {
+    button.innerHTML = original;
+    button.classList.remove("copied");
+  }, 1200);
+}
+
+function youtubeEmbedUrl(videoId) {
+  return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+}
+
+function youtubeEmbedCode(videoId, title) {
+  return `<iframe width="560" height="315" src="${youtubeEmbedUrl(videoId)}" title="${escapeHtmlAttribute(title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+}
+
+function escapeHtmlAttribute(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 // ── Feedback widget ────────────────────────────────────────────────────

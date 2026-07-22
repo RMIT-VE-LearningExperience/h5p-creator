@@ -126,22 +126,25 @@ def parse_pptx(path: str | Path) -> ParsedDocument:
         body_texts: list[str] = []
 
         for shape in slide.shapes:
-            if not shape.has_text_frame:
-                continue
-            is_title = (
-                hasattr(shape, "placeholder_format")
-                and shape.placeholder_format is not None
-                and shape.placeholder_format.idx == 0
-            )
-            for para in shape.text_frame.paragraphs:
-                text = para.text.strip()
-                if not text:
+            try:
+                if not shape.has_text_frame:
                     continue
-                if is_title:
-                    slide_title = text
-                else:
-                    body_texts.append(text)
-                raw_lines.append(text)
+                is_title = (
+                    hasattr(shape, "placeholder_format")
+                    and shape.placeholder_format is not None
+                    and shape.placeholder_format.idx == 0
+                )
+                for para in shape.text_frame.paragraphs:
+                    text = para.text.strip()
+                    if not text:
+                        continue
+                    if is_title:
+                        slide_title = text
+                    else:
+                        body_texts.append(text)
+                    raw_lines.append(text)
+            except Exception:
+                continue
 
         if not slide_title:
             slide_title = f"Slide {slide_idx + 1}"

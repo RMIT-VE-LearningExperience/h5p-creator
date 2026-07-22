@@ -8,14 +8,17 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    default_ai_provider: str = "openai"
-    openai_api_key: str | None = None
-    openai_model: str = "gpt-4o-2024-08-06"
-    anthropic_api_key: str | None = None
-    anthropic_model: str = "claude-opus-4-1"
+    default_ai_provider: str = "val"
     val_api_key: str | None = None
-    val_base_url: str = "https://val-sandbox.rmit.edu.au/api"
-    val_model: str = "openai-gpt-4o-mini"
+    val_base_url: str = "https://val-npe.rmit.edu.au/api"
+    val_model: str = "openai-gpt-5.4"
+    canvas_base_url: str | None = None
+    canvas_api_token: str | None = None
+    canvas_account_id: str | None = None
+    canvas_allowed_hosts: str | None = None
+    canvas_course_search_ids: str | None = None
+    youtube_api_key: str | None = None
+    powerpoint_template_path: str = "app/templates/PowerPoint_Template_Showcase.pptx"
     upload_dir: str = "/tmp/h5p-creator/uploads"
     output_dir: str = "/tmp/h5p-creator/outputs"
 

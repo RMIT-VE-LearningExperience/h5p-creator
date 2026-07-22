@@ -1,0 +1,12 @@
+.git
+.env
+.vscode
+.vercel
+__pycache__
+*.pyc
+*.pyo
+uploads/
+outputs/
+tests/
+deploy-stage/
+*.h5p

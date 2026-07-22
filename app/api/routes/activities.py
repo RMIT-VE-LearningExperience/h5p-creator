@@ -21,7 +21,7 @@ from app.schemas.requests import (
     GenerateResponse,
     PreviewSection,
 )
-from app.services import ai_processor, document_analyzer, document_parser, h5p_packager
+from app.services import ai_processor, document_analyzer, document_parser, h5p_packager, training_gov
 
 router = APIRouter(prefix="/activities", tags=["activities"])
 
@@ -30,6 +30,17 @@ _ALLOWED_ACTIVITY_TYPES = {
     "H5P.MultiChoice", "H5P.TrueFalse", "H5P.DragText",
     "H5P.Blanks", "H5P.GuessTheAnswer", "H5P.Summary",
 }
+
+
+@router.get("/training-product/{code}")
+async def training_product(code: str) -> dict:
+    try:
+        product = await training_gov.lookup_training_product(code)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return product.as_dict()
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -95,7 +106,7 @@ async def generate_activity(
     pass_percentage: int = Form(default=100),
     paragraph_count: int = Form(default=4),
 ) -> GenerateResponse:
-    if ai_provider not in {"openai", "anthropic", "val"}:
+    if ai_provider not in {"val"}:
         raise HTTPException(status_code=400, detail="Unsupported AI provider")
     if activity_type not in _ALLOWED_ACTIVITY_TYPES:
         raise HTTPException(status_code=400, detail="Unsupported activity type")
@@ -151,6 +162,7 @@ async def generate_batch(
     files: list[UploadFile] = File(default=[]),
     text_content: str = Form(default=""),
     subject_area: str = Form(default=""),
+    training_context: str = Form(default=""),
     learner_context: str = Form(default=""),
     activity_types: str = Form(...),
     content_mode: str = Form(default="shared"),
@@ -172,14 +184,24 @@ async def generate_batch(
         raise HTTPException(status_code=400, detail=f"Unsupported activity types: {invalid}")
     if not files and not text_content.strip():
         raise HTTPException(status_code=400, detail="Provide at least one file or paste some content")
-    if ai_provider not in {"openai", "anthropic", "val"}:
+    if ai_provider not in {"val"}:
         raise HTTPException(status_code=400, detail="Unsupported AI provider")
     if not 0 < pass_percentage <= 100:
         raise HTTPException(status_code=400, detail="Pass percentage must be between 1 and 100")
     count_per_type = max(1, min(count_per_type, 10))
     paragraph_count = max(3, min(paragraph_count, 20))
     subject_area = subject_area.strip()
+    training_context = training_context.strip()
     learner_context = learner_context.strip()
+    if subject_area and not training_context and re.fullmatch(r"[A-Za-z0-9]{5,14}", subject_area):
+        try:
+            product = await training_gov.lookup_training_product(subject_area)
+            subject_area = f"{product.code} {product.title}".strip()
+            training_context = training_gov.format_for_prompt(product)
+        except Exception:
+            # Lookup should improve generation context, but it should not block
+            # users from generating with manually entered subject text.
+            training_context = ""
 
     # Save and parse uploaded files; also accept pasted plain text
     upload_paths: list[Path] = []
@@ -242,6 +264,7 @@ async def generate_batch(
                 paragraph_count=paragraph_count,
                 model_override=model_override,
                 subject_area=subject_area,
+                training_context=training_context,
                 learner_context=learner_context,
             )
 
