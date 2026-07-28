@@ -187,6 +187,11 @@ async def _get_transcript_with_package(video_id: str) -> dict[str, Any] | None:
     except VideoUnavailable as exc:
         raise YouTubeAPIError("This YouTube video is unavailable.") from exc
     except CouldNotRetrieveTranscript as exc:
+        if proxy_config is None:
+            raise YouTubeTranscriptBlockedError(
+                "YouTube blocked transcript retrieval from this cloud server. "
+                "A rotating residential transcript proxy must be configured."
+            ) from exc
         raise YouTubeAPIError("YouTube did not provide a readable transcript for this video.") from exc
 
     segments = []
