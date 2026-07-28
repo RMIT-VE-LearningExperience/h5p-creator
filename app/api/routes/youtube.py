@@ -47,6 +47,8 @@ async def search_youtube_videos(
 async def youtube_video_transcript(video_id: str) -> dict:
     try:
         return await youtube_search.get_transcript(video_id)
+    except youtube_search.YouTubeTranscriptBlockedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except youtube_search.YouTubeAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 

@@ -19,6 +19,10 @@ class YouTubeAPIError(RuntimeError):
     pass
 
 
+class YouTubeTranscriptBlockedError(YouTubeAPIError):
+    pass
+
+
 _YOUTUBE_API = "https://www.googleapis.com/youtube/v3"
 _YOUTUBE_WATCH = "https://www.youtube.com/watch"
 
@@ -45,6 +49,7 @@ async def search_videos(query: str, limit: int = 8) -> list[dict[str, Any]]:
             "part": "snippet",
             "q": query,
             "type": "video",
+            "videoCaption": "closedCaption",
             "maxResults": max_results,
             "safeSearch": "moderate",
         },
@@ -134,18 +139,58 @@ async def get_transcript(video_id: str) -> dict[str, Any]:
 async def _get_transcript_with_package(video_id: str) -> dict[str, Any] | None:
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
+        from youtube_transcript_api._errors import (
+            CouldNotRetrieveTranscript,
+            IpBlocked,
+            NoTranscriptFound,
+            RequestBlocked,
+            TranscriptsDisabled,
+            VideoUnavailable,
+        )
+        from youtube_transcript_api.proxies import GenericProxyConfig, WebshareProxyConfig
     except ImportError:
         return None
 
-    try:
-        transcript = await asyncio.to_thread(
-            lambda: YouTubeTranscriptApi().fetch(video_id, languages=["en"])
+    proxy_config = None
+    if (
+        settings.youtube_transcript_webshare_username
+        and settings.youtube_transcript_webshare_password
+    ):
+        proxy_config = WebshareProxyConfig(
+            proxy_username=settings.youtube_transcript_webshare_username,
+            proxy_password=settings.youtube_transcript_webshare_password,
+            filter_ip_locations=["au", "us"],
         )
-    except Exception:
-        return None
+    elif settings.youtube_transcript_proxy_url:
+        proxy_config = GenericProxyConfig(
+            http_url=settings.youtube_transcript_proxy_url,
+            https_url=settings.youtube_transcript_proxy_url,
+        )
+
+    api = YouTubeTranscriptApi(proxy_config=proxy_config)
+    try:
+        transcript_list = await asyncio.to_thread(api.list, video_id)
+        try:
+            transcript = transcript_list.find_transcript(["en", "en-AU", "en-US", "en-GB"])
+        except NoTranscriptFound:
+            transcript = next(iter(transcript_list), None)
+        if transcript is None:
+            return _unavailable_transcript(video_id)
+        fetched = await asyncio.to_thread(transcript.fetch)
+    except (IpBlocked, RequestBlocked) as exc:
+        raise YouTubeTranscriptBlockedError(
+            "YouTube blocked transcript retrieval from this server. "
+            "Configure a rotating residential transcript proxy."
+        ) from exc
+    except (TranscriptsDisabled, NoTranscriptFound):
+        return _unavailable_transcript(video_id)
+    except VideoUnavailable as exc:
+        raise YouTubeAPIError("This YouTube video is unavailable.") from exc
+    except CouldNotRetrieveTranscript as exc:
+        raise YouTubeAPIError("YouTube did not provide a readable transcript for this video.") from exc
 
     segments = []
-    for snippet in transcript:
+    for snippet in fetched:
         text = str(getattr(snippet, "text", "") or "").strip()
         if not text:
             continue
@@ -160,11 +205,23 @@ async def _get_transcript_with_package(video_id: str) -> dict[str, Any] | None:
     return {
         "video_id": video_id,
         "available": bool(segments),
-        "language": getattr(transcript, "language", "English") or "English",
+        "language": getattr(transcript, "language", None) or "Transcript",
         "is_generated": bool(getattr(transcript, "is_generated", False)),
         "segments": segments,
         "text": "\n".join(segment["text"] for segment in segments),
         "message": "" if segments else "No transcript text was available for this video.",
+    }
+
+
+def _unavailable_transcript(video_id: str) -> dict[str, Any]:
+    return {
+        "video_id": video_id,
+        "available": False,
+        "language": None,
+        "is_generated": None,
+        "segments": [],
+        "text": "",
+        "message": "This video does not provide captions or a transcript.",
     }
 
 

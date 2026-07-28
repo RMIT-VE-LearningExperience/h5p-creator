@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     canvas_allowed_hosts: str | None = None
     canvas_course_search_ids: str | None = None
     youtube_api_key: str | None = None
+    youtube_transcript_webshare_username: str | None = None
+    youtube_transcript_webshare_password: str | None = None
+    youtube_transcript_proxy_url: str | None = None
     powerpoint_template_path: str = "app/templates/PowerPoint_Template_Showcase.pptx"
     upload_dir: str = "/tmp/h5p-creator/uploads"
     output_dir: str = "/tmp/h5p-creator/outputs"
