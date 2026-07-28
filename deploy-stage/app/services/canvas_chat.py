@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from app.core.config import settings
@@ -85,6 +86,123 @@ _AQF_LABELS = {
     9: "AQF 9 (Masters Degree)",
     10: "AQF 10 (Doctoral Degree)",
 }
+
+
+def aqf_label(aqf_level: int | None) -> str | None:
+    return _AQF_LABELS.get(aqf_level) if aqf_level else None
+
+
+_AQF_SUGGESTION_SYSTEM_PROMPT = """\
+Suggest the most likely Australian Qualifications Framework (AQF) level for the
+given Canvas course. Use only the supplied course, module, and page metadata. Prefer
+explicit qualification signals in the title first (Certificate I-IV, Diploma,
+Advanced Diploma, Bachelor, Honours, Graduate Certificate/Diploma, Masters,
+Doctoral), then infer from course/module/page language if needed. Return JSON:
+{"aqf_level": <integer 1-10>, "reason": "<brief reason>"}.
+"""
+
+
+def suggest_aqf_level(course_context: dict[str, Any]) -> dict[str, Any]:
+    heuristic = _heuristic_aqf_level(course_context)
+    try:
+        from openai import OpenAI
+    except ImportError as exc:
+        if heuristic:
+            return heuristic
+        raise CanvasChatConfigError("OpenAI SDK is not installed.") from exc
+    if not settings.val_api_key:
+        if heuristic:
+            return heuristic
+        raise CanvasChatConfigError("VAL_API_KEY is not configured.")
+
+    model_name = settings.val_model
+    client = OpenAI(api_key=settings.val_api_key, base_url=settings.val_base_url)
+    user_content = json.dumps(_compact_aqf_context(course_context), ensure_ascii=False, indent=2)
+
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": _AQF_SUGGESTION_SYSTEM_PROMPT},
+                {"role": "user", "content": user_content},
+            ],
+        )
+    except Exception as exc:
+        if heuristic:
+            return heuristic
+        msg = str(exc)
+        if any(x in msg for x in ("403", "Forbidden", "forbidden", "blocked", "unavailable")):
+            raise CanvasChatError("VAL_NETWORK_ERROR") from exc
+        raise CanvasChatError(f"VAL AQF suggestion failed: {msg}") from exc
+
+    raw = (response.choices[0].message.content or "").strip()
+    try:
+        parsed = json.loads(raw)
+        aqf_level = int(parsed.get("aqf_level"))
+        reason = str(parsed.get("reason") or "").strip()
+    except (TypeError, ValueError, AttributeError):
+        if heuristic:
+            return heuristic
+        raise CanvasChatError("VAL returned no AQF suggestion.")
+    if aqf_level < 1 or aqf_level > 10:
+        if heuristic:
+            return heuristic
+        raise CanvasChatError("VAL returned an invalid AQF level.")
+    return {
+        "aqf_level": aqf_level,
+        "aqf_label": _AQF_LABELS[aqf_level],
+        "reason": reason or "Suggested from the Canvas course metadata.",
+    }
+
+
+def _compact_aqf_context(course_context: dict[str, Any]) -> dict[str, Any]:
+    course = course_context.get("course") or {}
+    return {
+        "course": {
+            "name": course.get("name") or "",
+            "course_code": course.get("course_code") or "",
+        },
+        "modules": [
+            {"name": module.get("name") or ""}
+            for module in (course_context.get("modules") or [])[:30]
+        ],
+        "pages": [
+            {"title": page.get("title") or ""}
+            for page in (course_context.get("pages") or [])[:50]
+        ],
+    }
+
+
+def _heuristic_aqf_level(course_context: dict[str, Any]) -> dict[str, Any] | None:
+    compact = _compact_aqf_context(course_context)
+    text = " ".join([
+        compact["course"]["name"],
+        compact["course"]["course_code"],
+        *[item["name"] for item in compact["modules"]],
+        *[item["title"] for item in compact["pages"]],
+    ]).lower()
+    patterns = [
+        (10, r"\b(?:doctorate|doctoral|phd|ph\.d)\b", "doctoral course language"),
+        (9, r"\b(?:master|masters|master's|postgraduate)\b", "masters or postgraduate course language"),
+        (8, r"\b(?:honours|honors|graduate certificate|graduate diploma|grad cert|grad dip)\b", "honours or graduate certificate/diploma language"),
+        (7, r"\b(?:bachelor|undergraduate|degree)\b", "bachelor degree language"),
+        (6, r"\b(?:advanced diploma|associate degree)\b", "advanced diploma or associate degree language"),
+        (5, r"\b(?:diploma)\b", "diploma language"),
+        (4, r"\b(?:certificate iv|cert iv|certificate 4|cert 4)\b", "Certificate IV language"),
+        (3, r"\b(?:certificate iii|cert iii|certificate 3|cert 3)\b", "Certificate III language"),
+        (2, r"\b(?:certificate ii|cert ii|certificate 2|cert 2)\b", "Certificate II language"),
+        (1, r"\b(?:certificate i|cert i|certificate 1|cert 1)\b", "Certificate I language"),
+    ]
+    for level, pattern, reason in patterns:
+        if re.search(pattern, text):
+            return {
+                "aqf_level": level,
+                "aqf_label": _AQF_LABELS[level],
+                "reason": f"Suggested from {reason}.",
+            }
+    return None
+
 
 _SLOT_DESCRIPTION_SYSTEM_PROMPT = """\
 You write short Canvas course-page copy that introduces an embedded YouTube video.

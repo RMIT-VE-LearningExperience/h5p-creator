@@ -10,7 +10,7 @@
       document.documentElement.dataset.workspace = pages[window.location.pathname] || "h5p";
     })();
   </script>
-  <link rel="stylesheet" href="/static/styles.css?v=20260721-canvas-connect">
+  <link rel="stylesheet" href="/static/styles.css?v=20260728-video-slot-redesign">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HEFSNZDXB9"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -22,8 +22,23 @@
 <body>
   <div class="topbar"></div>
   <header class="app-header">
-    <p class="eyebrow">RMIT VE Learning Experience</p>
-    <h1 class="app-title"><span id="app-title-text">H5P Creator</span> <span class="beta-badge">BETA</span></h1>
+    <div>
+      <p class="eyebrow">RMIT VE Learning Experience</p>
+      <h1 class="app-title"><span id="app-title-text">H5P Creator</span> <span class="beta-badge">BETA</span></h1>
+    </div>
+    <div id="youtube-account-menu" class="youtube-account-menu" hidden>
+      <button type="button" id="youtube-account-trigger" class="youtube-account-trigger" aria-haspopup="true" aria-expanded="false">
+        <span id="youtube-account-avatar" class="youtube-account-avatar">C</span>
+        <span class="youtube-account-text">
+          <strong id="youtube-account-name">Canvas user</strong>
+          <small id="youtube-account-host">Connected</small>
+        </span>
+      </button>
+      <div id="youtube-account-popover" class="youtube-account-popover" hidden>
+        <button type="button" id="youtube-account-change">Change connection</button>
+        <button type="button" id="youtube-account-disconnect">Disconnect</button>
+      </div>
+    </div>
   </header>
 
   <main class="shell">
@@ -396,15 +411,17 @@
     </div>
 
     <div id="youtube-workspace" class="workspace-tab" hidden>
-      <nav class="steps" id="youtube-steps" aria-label="Progress">
-        <div class="step active" id="youtube-step-pill-1"><span>1</span>Connect</div>
-        <div class="step-connector"></div>
-        <div class="step" id="youtube-step-pill-2"><span>2</span>Choose content</div>
-        <div class="step-connector"></div>
-        <div class="step" id="youtube-step-pill-3"><span>3</span>Review &amp; push</div>
-      </nav>
+      <div class="youtube-flow-topbar">
+        <nav class="steps youtube-steps" id="youtube-steps" aria-label="Progress">
+          <div class="step active" id="youtube-step-pill-1"><span>1</span>Connect</div>
+          <div class="step-connector"></div>
+          <div class="step" id="youtube-step-pill-2"><span>2</span>Choose content</div>
+          <div class="step-connector"></div>
+          <div class="step" id="youtube-step-pill-3"><span>3</span>Review &amp; push</div>
+        </nav>
+      </div>
 
-      <section class="panel canvas-connection-panel" aria-labelledby="youtube-canvas-connection-title">
+      <section id="youtube-connect-slide" class="panel canvas-connection-panel youtube-flow-slide" aria-labelledby="youtube-canvas-connection-title">
         <div class="canvas-header">
           <div>
             <p class="eyebrow">Canvas source</p>
@@ -442,15 +459,11 @@
         </div>
       </section>
 
-      <section id="youtube-canvas-tools" class="panel youtube-canvas-source" hidden>
+      <section id="youtube-canvas-tools" class="panel youtube-canvas-source youtube-flow-slide" hidden>
         <div>
           <p class="eyebrow">2 · Choose content</p>
           <h2 class="step-title">Find Canvas content</h2>
-        </div>
-
-        <div id="youtube-content-summary" class="yt-summary-row" hidden>
-          <p id="youtube-content-summary-text" class="muted"></p>
-          <button type="button" id="youtube-content-change-button" class="secondary">Change</button>
+          <p class="muted">Paste a Canvas course URL or search by name, then choose the module or page sections that need videos.</p>
         </div>
 
         <div id="youtube-content-form">
@@ -464,9 +477,13 @@
           <p id="youtube-canvas-source-status" class="status" aria-live="polite"></p>
           <div id="youtube-canvas-course-results" class="canvas-search-results"></div>
           <div id="youtube-canvas-source-picker" class="youtube-canvas-source-picker" hidden>
-            <div>
-              <h3 id="youtube-canvas-course-title">Canvas course</h3>
-              <p class="muted">Select modules and/or pages. Leave everything clear to use all readable course pages.</p>
+            <div class="youtube-selected-course">
+              <div>
+                <p class="eyebrow">Selected course</p>
+                <h3 id="youtube-canvas-course-title">Canvas course</h3>
+                <p class="muted">Select modules and/or pages. Leave everything clear to use all readable course pages.</p>
+              </div>
+              <button type="button" id="youtube-content-change-button" class="secondary">Change course</button>
             </div>
             <div class="youtube-canvas-source-columns">
               <fieldset>
@@ -493,13 +510,14 @@
                 <option value="9">AQF 9 &middot; Masters Degree</option>
                 <option value="10">AQF 10 &middot; Doctoral Degree</option>
               </select>
+              <small id="youtube-aqf-suggestion" class="youtube-aqf-suggestion"></small>
             </label>
             <button type="button" id="youtube-canvas-suggest-button">Read content and suggest videos</button>
           </div>
         </div>
       </section>
 
-      <section id="youtube-slot-panel" class="panel youtube-slot-panel" hidden>
+      <section id="youtube-slot-panel" class="panel youtube-slot-panel youtube-flow-slide" hidden>
         <div>
           <p class="eyebrow">3 &middot; Video slots found on the page</p>
           <h2 class="step-title">Pick videos for each slot</h2>
@@ -589,6 +607,41 @@
     </div>
   </dialog>
 
+  <!-- ── YouTube preview modal ──────────────────────────────────────── -->
+  <dialog id="youtube-preview-modal" class="youtube-preview-modal">
+    <div class="youtube-preview-modal-inner">
+      <div class="youtube-preview-modal-header">
+        <div>
+          <p class="eyebrow" id="youtube-preview-channel"></p>
+          <h2 class="step-title" id="youtube-preview-title">Video preview</h2>
+        </div>
+        <button class="preview-modal-close" id="youtube-preview-close" aria-label="Close">✕</button>
+      </div>
+      <div class="youtube-preview-modal-body">
+        <div class="youtube-preview-player-wrap">
+          <iframe
+            id="youtube-preview-frame"
+            title="YouTube video preview"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
+        </div>
+        <aside class="youtube-preview-transcript">
+          <div class="youtube-preview-transcript-header">
+            <h3>Transcript</h3>
+            <span id="youtube-preview-transcript-meta" class="muted"></span>
+          </div>
+          <div id="youtube-preview-transcript-body" class="youtube-preview-transcript-body">
+            <p class="muted">Loading transcript...</p>
+          </div>
+        </aside>
+      </div>
+      <div class="youtube-preview-modal-footer">
+        <a id="youtube-preview-open" href="#" target="_blank" rel="noopener">Open on YouTube</a>
+        <button type="button" id="youtube-preview-copy" class="secondary">Copy embed code</button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- ── Feedback widget ──────────────────────────────────────────────── -->
   <div class="feedback-widget">
     <div id="feedback-panel" class="feedback-panel" hidden>
@@ -618,6 +671,6 @@
     </button>
   </div>
 
-<script src="/static/app.js?v=20260721-canvas-connect" defer></script>
+<script src="/static/app.js?v=20260728-profile-topright" defer></script>
 </body>
 </html>

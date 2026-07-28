@@ -84,6 +84,7 @@ const youtubeCanvasTokenToggle = document.getElementById("youtube-canvas-token-t
 const youtubeCanvasConnectButton = document.getElementById("youtube-canvas-connect-button");
 const youtubeCanvasDisconnectButton = document.getElementById("youtube-canvas-disconnect-button");
 const youtubeCanvasConnectionStatus = document.getElementById("youtube-canvas-connection-status");
+const youtubeConnectSlide = document.getElementById("youtube-connect-slide");
 const youtubeCanvasTools = document.getElementById("youtube-canvas-tools");
 const youtubeCanvasCourseSearch = document.getElementById("youtube-canvas-course-search");
 const youtubeCanvasCourseSearchButton = document.getElementById("youtube-canvas-course-search-button");
@@ -95,6 +96,7 @@ const youtubeCanvasModuleList = document.getElementById("youtube-canvas-module-l
 const youtubeCanvasPageList = document.getElementById("youtube-canvas-page-list");
 const youtubeCanvasSuggestButton = document.getElementById("youtube-canvas-suggest-button");
 const youtubeAqfLevelSelect = document.getElementById("youtube-aqf-level");
+const youtubeAqfSuggestion = document.getElementById("youtube-aqf-suggestion");
 const youtubeSlotPanel = document.getElementById("youtube-slot-panel");
 const youtubeSlotResults = document.getElementById("youtube-slot-results");
 const youtubeStepPills = [1, 2, 3].map(n => document.getElementById(`youtube-step-pill-${n}`));
@@ -108,6 +110,14 @@ const youtubeContentChangeButton = document.getElementById("youtube-content-chan
 const youtubeContentForm = document.getElementById("youtube-content-form");
 const youtubeManualToggle = document.getElementById("youtube-manual-toggle");
 const youtubeManualPanel = document.getElementById("youtube-manual-panel");
+const youtubeAccountMenu = document.getElementById("youtube-account-menu");
+const youtubeAccountTrigger = document.getElementById("youtube-account-trigger");
+const youtubeAccountAvatar = document.getElementById("youtube-account-avatar");
+const youtubeAccountName = document.getElementById("youtube-account-name");
+const youtubeAccountHost = document.getElementById("youtube-account-host");
+const youtubeAccountPopover = document.getElementById("youtube-account-popover");
+const youtubeAccountChange = document.getElementById("youtube-account-change");
+const youtubeAccountDisconnect = document.getElementById("youtube-account-disconnect");
 const paraCountInput   = document.getElementById("paragraph-count");
 const paraCountLabel   = document.getElementById("para-count-label");
 const statusEl         = document.getElementById("status");
@@ -135,6 +145,15 @@ const previewModalClose   = document.getElementById("preview-modal-close");
 const previewModalCancel  = document.getElementById("preview-modal-cancel");
 const previewModalDownload = document.getElementById("preview-modal-download");
 
+const youtubePreviewModal = document.getElementById("youtube-preview-modal");
+const youtubePreviewChannel = document.getElementById("youtube-preview-channel");
+const youtubePreviewTitle = document.getElementById("youtube-preview-title");
+const youtubePreviewFrame = document.getElementById("youtube-preview-frame");
+const youtubePreviewTranscriptMeta = document.getElementById("youtube-preview-transcript-meta");
+const youtubePreviewTranscriptBody = document.getElementById("youtube-preview-transcript-body");
+const youtubePreviewClose = document.getElementById("youtube-preview-close");
+const youtubePreviewOpen = document.getElementById("youtube-preview-open");
+const youtubePreviewCopy = document.getElementById("youtube-preview-copy");
 
 // ── App tabs ──────────────────────────────────────────────────────────
 const WORKSPACE_PAGES = {
@@ -1315,13 +1334,14 @@ function setCanvasConnected(payload) {
       view.badge.classList.remove("canvas-badge-off");
     }
     if (view.tools) view.tools.hidden = false;
-    if (view.disconnectButton) view.disconnectButton.hidden = false;
+    if (view.disconnectButton) view.disconnectButton.hidden = view.workspace === "youtube";
     if (view.connectButton) view.connectButton.textContent = "Reconnect";
     setCanvasConnectionStatus(view, `Connected as ${name}.`);
   });
   if (canvasSearchButton) canvasSearchButton.disabled = false;
   const host = canvasSessionCredentials ? new URL(canvasSessionCredentials.baseUrl).hostname : "";
   setYoutubeConnectSummary(`Connected as ${name}${host ? ` · ${host}` : ""}.`);
+  updateYouTubeAccountProfile(payload);
   updateYoutubeStepIndicator(youtubeContentChosen ? 3 : 2);
 }
 
@@ -1338,6 +1358,7 @@ function setCanvasDisconnected() {
   });
   if (canvasSearchButton) canvasSearchButton.disabled = true;
   resetYoutubeConnectSummary();
+  resetYouTubeAccountProfile();
   updateYoutubeStepIndicator(1);
 }
 
@@ -1942,6 +1963,7 @@ let youtubeLatestResults = [];
 let youtubeCanvasCourseContext = null;
 const videoSlotState = new Map();
 let youtubeContentChosen = false;
+let youtubeAqfSuggestionRequestId = 0;
 
 initYouTubeSearch();
 
@@ -1952,6 +1974,35 @@ function updateYoutubeStepIndicator(step) {
     pill.classList.toggle("active", n === step);
     pill.classList.toggle("done", n < step);
   });
+  updateYouTubeFlowSlides(step);
+}
+
+function updateYouTubeFlowSlides(step = 1) {
+  if (youtubeConnectSlide) youtubeConnectSlide.hidden = step !== 1;
+  if (youtubeCanvasTools) youtubeCanvasTools.hidden = step !== 2;
+  if (youtubeSlotPanel) youtubeSlotPanel.hidden = step !== 3;
+  if (youtubeManualToggle) youtubeManualToggle.hidden = !canvasReady;
+  if (!canvasReady && youtubeManualPanel) youtubeManualPanel.hidden = true;
+}
+
+function showYouTubeAccountMenu(open) {
+  if (!youtubeAccountPopover || !youtubeAccountTrigger) return;
+  youtubeAccountPopover.hidden = !open;
+  youtubeAccountTrigger.setAttribute("aria-expanded", String(open));
+}
+
+function updateYouTubeAccountProfile(payload) {
+  const name = payload?.user?.name || "Canvas user";
+  const host = canvasSessionCredentials ? new URL(canvasSessionCredentials.baseUrl).hostname : "Connected";
+  if (youtubeAccountMenu) youtubeAccountMenu.hidden = false;
+  if (youtubeAccountName) youtubeAccountName.textContent = name;
+  if (youtubeAccountHost) youtubeAccountHost.textContent = host;
+  if (youtubeAccountAvatar) youtubeAccountAvatar.textContent = (name.trim()[0] || "C").toUpperCase();
+}
+
+function resetYouTubeAccountProfile() {
+  if (youtubeAccountMenu) youtubeAccountMenu.hidden = true;
+  showYouTubeAccountMenu(false);
 }
 
 function setYoutubeConnectSummary(text) {
@@ -1968,12 +2019,10 @@ function resetYoutubeConnectSummary() {
 function setYoutubeContentSummary(text) {
   if (youtubeContentSummaryText) youtubeContentSummaryText.textContent = text;
   if (youtubeContentSummary) youtubeContentSummary.hidden = false;
-  if (youtubeContentForm) youtubeContentForm.hidden = true;
 }
 
 function resetYoutubeContentSummary() {
   if (youtubeContentSummary) youtubeContentSummary.hidden = true;
-  if (youtubeContentForm) youtubeContentForm.hidden = false;
 }
 
 function initYouTubeSearch() {
@@ -1995,6 +2044,11 @@ function initYouTubeSearch() {
       updateYouTubeSelection();
     });
     youtubeResults.addEventListener("click", (e) => {
+      const previewButton = e.target.closest("[data-preview-youtube]");
+      if (previewButton) {
+        openYouTubePreviewModal(previewButton, e);
+        return;
+      }
       const copyButton = e.target.closest("[data-copy-youtube-embed]");
       if (copyButton) {
         handleYouTubeEmbedCopy(e);
@@ -2031,6 +2085,17 @@ function initYouTubeSearch() {
       if (input) handleVideoSlotSelectionChange(input);
     });
     youtubeSlotResults.addEventListener("click", (e) => {
+      const scrollButton = e.target.closest("[data-slot-scroll]");
+      if (scrollButton) {
+        const carousel = scrollButton.closest(".video-slot-carousel-wrap")?.querySelector("[data-slot-carousel]");
+        if (carousel) carousel.scrollBy({ left: Number(scrollButton.dataset.slotScroll) * carousel.clientWidth * 0.8, behavior: "smooth" });
+        return;
+      }
+      const youtubePreviewButton = e.target.closest("[data-preview-youtube]");
+      if (youtubePreviewButton) {
+        openYouTubePreviewModal(youtubePreviewButton, e);
+        return;
+      }
       const toggleButton = e.target.closest("[data-slot-toggle]");
       if (toggleButton) {
         toggleVideoSlotCard(toggleButton.closest(".video-slot-card"));
@@ -2073,6 +2138,56 @@ function initYouTubeSearch() {
       }
     });
   }
+  if (canvasPagePreview) {
+    canvasPagePreview.addEventListener("click", (e) => {
+      const previewButton = e.target.closest("[data-preview-youtube]");
+      if (previewButton) {
+        openYouTubePreviewModal(previewButton, e);
+        return;
+      }
+      const copyButton = e.target.closest("[data-copy-youtube-embed]");
+      if (copyButton) handleYouTubeEmbedCopy(e);
+    });
+  }
+  if (youtubePreviewClose) youtubePreviewClose.addEventListener("click", closeYouTubePreviewModal);
+  if (youtubePreviewModal) {
+    youtubePreviewModal.addEventListener("click", (e) => {
+      if (e.target === youtubePreviewModal) closeYouTubePreviewModal();
+    });
+    youtubePreviewModal.addEventListener("close", resetYouTubePreviewModal);
+  }
+  if (youtubePreviewCopy) {
+    youtubePreviewCopy.addEventListener("click", async () => {
+      const videoId = youtubePreviewCopy.dataset.videoId || "";
+      const title = youtubePreviewCopy.dataset.videoTitle || "YouTube video";
+      if (!videoId) return;
+      await copyYouTubeEmbedCode(videoId, title, youtubePreviewCopy);
+    });
+  }
+  if (youtubeAccountTrigger) {
+    youtubeAccountTrigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showYouTubeAccountMenu(youtubeAccountPopover?.hidden !== false);
+    });
+  }
+  if (youtubeAccountChange) {
+    youtubeAccountChange.addEventListener("click", () => {
+      showYouTubeAccountMenu(false);
+      resetYoutubeConnectSummary();
+      updateYoutubeStepIndicator(1);
+    });
+  }
+  if (youtubeAccountDisconnect) {
+    youtubeAccountDisconnect.addEventListener("click", () => {
+      showYouTubeAccountMenu(false);
+      disconnectCanvas();
+    });
+  }
+  document.addEventListener("click", (e) => {
+    if (youtubeAccountMenu && !youtubeAccountMenu.contains(e.target)) {
+      showYouTubeAccountMenu(false);
+    }
+  });
   if (youtubeConnectChangeButton) {
     youtubeConnectChangeButton.addEventListener("click", () => {
       resetYoutubeConnectSummary();
@@ -2169,12 +2284,14 @@ function renderYouTubeCanvasCourseResults(courses) {
 async function loadYouTubeCanvasCourse(courseId) {
   setYouTubeCanvasSourceStatus(`Reading Canvas course ${courseId}...`);
   youtubeCanvasSourcePicker.hidden = true;
+  setYouTubeAqfSuggestion("");
   try {
     const response = await canvasFetch(`/canvas/courses/${encodeURIComponent(courseId)}`);
     const payload = await readResponsePayload(response);
     if (!response.ok) throw new Error(extractErrorMessage(payload, "Could not read Canvas course"));
     youtubeCanvasCourseContext = payload;
     renderYouTubeCanvasSources(payload);
+    suggestYouTubeAqfLevel(payload);
     setYouTubeCanvasSourceStatus("");
   } catch (err) {
     setYouTubeCanvasSourceStatus(err.message, true);
@@ -2218,6 +2335,68 @@ function currentAqfLevel() {
   const raw = youtubeAqfLevelSelect ? youtubeAqfLevelSelect.value : "";
   const parsed = parseInt(raw, 10);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function aqfSearchModifier(level) {
+  if (!level) return "";
+  if (level <= 2) return "introductory basics";
+  if (level <= 4) return "beginner practical";
+  if (level <= 6) return "applied professional";
+  if (level <= 8) return "advanced professional";
+  return "expert research";
+}
+
+function searchQueryForAqf(query) {
+  const level = currentAqfLevel();
+  const modifier = aqfSearchModifier(level);
+  if (!modifier) return query;
+  const lower = query.toLowerCase();
+  if (["introductory", "beginner", "basics", "applied", "professional", "advanced", "expert", "research"]
+    .some(term => lower.includes(term))) {
+    return query;
+  }
+  return `${query} ${modifier}`;
+}
+
+function setYouTubeAqfSuggestion(text) {
+  if (youtubeAqfSuggestion) youtubeAqfSuggestion.textContent = text;
+}
+
+function setYouTubeAqfSuggestionRich(label, reason) {
+  if (!youtubeAqfSuggestion) return;
+  const reasonHtml = reason
+    ? `<span class="youtube-aqf-reason" title="${escapeHtml(reason)}">${escapeHtml(reason)}</span>`
+    : "";
+  youtubeAqfSuggestion.innerHTML =
+    `<strong>Suggested: ${escapeHtml(label)}</strong>${reasonHtml}`;
+}
+
+async function suggestYouTubeAqfLevel(payload) {
+  if (!youtubeAqfLevelSelect || !payload?.course?.id) return;
+  const requestId = ++youtubeAqfSuggestionRequestId;
+  setYouTubeAqfSuggestion("Suggesting AQF level...");
+  try {
+    const response = await canvasFetch("/canvas/courses/aqf-suggestion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: payload.course.id,
+        course_name: payload.course.name || "",
+      }),
+    });
+    const suggestion = await readResponsePayload(response);
+    if (requestId !== youtubeAqfSuggestionRequestId) return;
+    if (!response.ok) throw new Error(extractErrorMessage(suggestion, "AQF suggestion failed"));
+    const level = parseInt(suggestion.aqf_level, 10);
+    if (Number.isFinite(level) && level >= 1 && level <= 10 && !currentAqfLevel()) {
+      youtubeAqfLevelSelect.value = String(level);
+    }
+    const label = suggestion.aqf_label || youtubeAqfLevelSelect.selectedOptions[0]?.textContent || "AQF level";
+    setYouTubeAqfSuggestionRich(label, suggestion.reason || "");
+  } catch (err) {
+    if (requestId !== youtubeAqfSuggestionRequestId) return;
+    setYouTubeAqfSuggestion("Choose an AQF level to tune the video search, or leave it unspecified.");
+  }
 }
 
 async function suggestVideoSlotsFromCanvasContent() {
@@ -2288,11 +2467,15 @@ function renderVideoSlotCarouselItems(videos) {
   return videos.map(video => `
     <label class="video-slot-carousel-item">
       <input type="checkbox" data-slot-video-id="${escapeHtml(video.id)}">
-      ${renderYouTubePreview(video)}
+      <span class="video-slot-carousel-check" aria-hidden="true"></span>
+      ${renderYouTubeThumb(video)}
       <span class="video-slot-carousel-meta">
         <strong>${escapeHtml(video.title || "Untitled video")}</strong>
-        <span class="video-slot-carousel-desc">${escapeHtml((video.description || "").slice(0, 200))}${(video.description || "").length > 200 ? "..." : ""}</span>
-        ${renderYouTubeVideoActions(video, false)}
+        <span class="video-slot-carousel-sub">${escapeHtml(formatYouTubeMeta(video))}</span>
+      </span>
+      <span class="video-slot-carousel-icons">
+        <a href="${escapeHtml(video.url || "")}" target="_blank" rel="noopener" class="yt-icon-action" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
+        <button type="button" class="yt-icon-action youtube-embed-copy" data-copy-youtube-embed="${escapeHtml(video.id || "")}" data-video-title="${escapeHtml(video.title || "YouTube video")}" title="Copy embed code" aria-label="Copy embed code">&lt;/&gt;</button>
       </span>
     </label>
   `).join("") || `<p class="muted">No candidate videos were found for this slot.</p>`;
@@ -2314,44 +2497,50 @@ function renderVideoSlots(courseId, pages) {
         revertRevisionId: null,
         alreadyFilled: Boolean(slot.already_filled),
       });
-      const snippet = (slot.original_description_text || slot.search_query || "").slice(0, 90);
-      const startBadge = slot.already_filled ? "Has a video · pick a replacement" : "Not started";
+      const description = slot.original_description_text || "";
       cards.push(`
         <article class="video-slot-card" data-slot-key="${escapeHtml(key)}">
           <button type="button" class="video-slot-header" data-slot-toggle aria-expanded="false">
             <span class="video-slot-header-text">
               <strong>${escapeHtml(page.title || page.url || "Canvas page")}</strong>
-              <span class="muted">${escapeHtml(snippet)}${snippet.length >= 90 ? "..." : ""}</span>
+              ${slot.already_filled ? `<span class="video-slot-flag">Currently has a video · pick a replacement</span>` : ""}
             </span>
-            <span class="video-slot-badge" data-slot-badge>${escapeHtml(startBadge)}</span>
+            <span class="video-slot-badge" data-slot-badge>Needs a video</span>
           </button>
           <div class="video-slot-body" data-slot-body hidden>
-            <div>
-              ${slot.original_description_text ? `<p class="video-slot-original">${escapeHtml(slot.original_description_text)}</p>` : ""}
-              <p class="muted" data-slot-search-used>Search used: ${escapeHtml(slot.search_query || "(none)")}</p>
+            ${description ? `<p class="video-slot-original">${escapeHtml(description)}</p>` : ""}
+
+            <div class="video-slot-carousel-wrap">
+              <button type="button" class="video-slot-arrow video-slot-arrow-prev" data-slot-scroll="-1" aria-label="Scroll left">&lsaquo;</button>
+              <div class="video-slot-carousel" data-slot-carousel>
+                ${renderVideoSlotCarouselItems(slot.videos || [])}
+              </div>
+              <button type="button" class="video-slot-arrow video-slot-arrow-next" data-slot-scroll="1" aria-label="Scroll right">&rsaquo;</button>
             </div>
-            <div class="video-slot-carousel" data-slot-carousel>
-              ${renderVideoSlotCarouselItems(slot.videos || [])}
-            </div>
+
             <div class="video-slot-refine">
-              <label>
-                <span>Add context to refine this search</span>
-                <textarea data-slot-context rows="2" placeholder="e.g. focus on a specific brand, shorter video, more about PPE..."></textarea>
-              </label>
-              <button type="button" class="secondary" data-refine-slot-search>Refine search</button>
+              <input type="text" data-slot-context placeholder="Refine these results — add context (e.g. shorter, a specific brand, more about PPE)">
+              <button type="button" class="secondary" data-refine-slot-search>Refine</button>
               <span class="status" data-slot-refine-status></span>
             </div>
-            <div class="video-slot-actions">
-              <button type="button" class="secondary" data-preview-slot disabled>Preview Canvas update</button>
-              <button type="button" data-push-slot disabled>Push to Canvas</button>
-              <button type="button" class="secondary" data-revert-slot hidden>Revert this change</button>
+
+            <div class="video-slot-actionbar">
+              <button type="button" class="video-slot-primary" data-preview-slot disabled>Preview update</button>
+              <button type="button" class="video-slot-primary" data-push-slot hidden>Push to Canvas</button>
+              <span class="video-slot-done" data-slot-done hidden>Pushed ✓ <button type="button" class="video-slot-undo" data-revert-slot>Undo</button></span>
               <span class="status" data-slot-status></span>
             </div>
+
             <div class="video-slot-preview-wrap" data-slot-preview-wrap hidden>
-              <button type="button" class="video-slot-html-toggle" data-slot-html-toggle aria-expanded="false">View HTML source</button>
-              <iframe class="video-slot-preview-frame" data-slot-preview-frame sandbox="allow-scripts allow-same-origin allow-popups" title="Canvas update preview" hidden></iframe>
-              <div class="video-slot-preview" data-slot-preview hidden></div>
+              <iframe class="video-slot-preview-frame" data-slot-preview-frame sandbox="allow-scripts allow-same-origin allow-popups" title="Canvas update preview"></iframe>
             </div>
+
+            <details class="video-slot-details">
+              <summary>Details</summary>
+              <p class="muted" data-slot-search-used>Search used: ${escapeHtml(slot.search_query || "(none)")}</p>
+              <button type="button" class="video-slot-html-toggle" data-slot-html-toggle aria-expanded="false">View HTML source</button>
+              <div class="video-slot-preview" data-slot-preview hidden></div>
+            </details>
           </div>
         </article>
       `);
@@ -2387,6 +2576,36 @@ function setVideoSlotBadge(card, text) {
   if (badge) badge.textContent = text;
 }
 
+function selectionBadgeText(state) {
+  const n = state.selected.size;
+  if (!n) return "Needs a video";
+  return `${n} selected`;
+}
+
+// Reset the action bar to the pre-preview state (used on selection change, refine,
+// and after a revert): only the "Preview update" primary is shown, enabled iff a
+// video is selected. Push button, done state, and the rendered preview are hidden.
+function resetVideoSlotActions(card, state) {
+  state.preview = null;
+  const previewButton = card.querySelector("[data-preview-slot]");
+  const pushButton = card.querySelector("[data-push-slot]");
+  const doneEl = card.querySelector("[data-slot-done]");
+  const previewWrap = card.querySelector("[data-slot-preview-wrap]");
+  const statusEl = card.querySelector("[data-slot-status]");
+  if (previewButton) {
+    previewButton.hidden = false;
+    previewButton.disabled = state.selected.size === 0;
+  }
+  if (pushButton) pushButton.hidden = true;
+  if (doneEl) doneEl.hidden = true;
+  if (previewWrap) previewWrap.hidden = true;
+  if (statusEl) {
+    statusEl.textContent = "";
+    statusEl.style.color = "";
+  }
+  setVideoSlotBadge(card, selectionBadgeText(state));
+}
+
 function handleVideoSlotSelectionChange(input) {
   const card = input.closest(".video-slot-card");
   if (!card) return;
@@ -2395,18 +2614,187 @@ function handleVideoSlotSelectionChange(input) {
   const videoId = input.dataset.slotVideoId;
   if (input.checked) state.selected.add(videoId);
   else state.selected.delete(videoId);
+  resetVideoSlotActions(card, state);
+}
 
-  state.preview = null;
-  const previewWrap = card.querySelector("[data-slot-preview-wrap]");
-  const pushButton = card.querySelector("[data-push-slot]");
+async function previewVideoSlot(card) {
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state) return;
+  const videos = [...state.selected].map(id => state.videosById.get(id)).filter(Boolean);
+  if (!videos.length) return;
+
   const previewButton = card.querySelector("[data-preview-slot]");
+  const pushButton = card.querySelector("[data-push-slot]");
+  const previewWrap = card.querySelector("[data-slot-preview-wrap]");
+  const previewFrame = card.querySelector("[data-slot-preview-frame]");
+  const previewSource = card.querySelector("[data-slot-preview]");
   const statusEl = card.querySelector("[data-slot-status]");
-  if (previewWrap) previewWrap.hidden = true;
-  if (pushButton) pushButton.disabled = true;
-  if (previewButton) previewButton.disabled = state.selected.size === 0;
-  if (statusEl) statusEl.textContent = "";
-  const idleBadge = state.alreadyFilled ? "Has a video · pick a replacement" : "Not started";
-  setVideoSlotBadge(card, state.selected.size ? `${state.selected.size} selected` : idleBadge);
+  previewButton.disabled = true;
+  statusEl.style.color = "";
+  statusEl.textContent = "Generating preview with VAL…";
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: state.courseId,
+        page_url: state.pageUrl,
+        slot_index: state.slotIndex,
+        videos,
+        aqf_level: currentAqfLevel(),
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Preview failed"));
+    state.preview = { updatedBody: payload.updated_body, expectedUpdatedAt: payload.expected_updated_at };
+    if (previewFrame) previewFrame.srcdoc = payload.preview_standalone_html || "";
+    if (previewSource) previewSource.textContent = payload.preview_html || "";
+    if (previewWrap) previewWrap.hidden = false;
+    previewButton.hidden = true;
+    if (pushButton) {
+      pushButton.hidden = false;
+      pushButton.disabled = false;
+    }
+    statusEl.textContent = "Preview ready — push when you're happy with it.";
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.color = "#b42318";
+    previewButton.disabled = false;
+  }
+}
+
+async function pushVideoSlot(card) {
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state || !state.preview) return;
+  const confirmed = window.confirm(
+    `This overwrites the video section on the live Canvas page "${state.pageUrl}". You can undo it afterwards if needed. Continue?`
+  );
+  if (!confirmed) return;
+
+  const pushButton = card.querySelector("[data-push-slot]");
+  const doneEl = card.querySelector("[data-slot-done]");
+  const revertButton = card.querySelector("[data-revert-slot]");
+  const statusEl = card.querySelector("[data-slot-status]");
+  pushButton.disabled = true;
+  statusEl.style.color = "";
+  statusEl.textContent = "Pushing update to Canvas…";
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: state.courseId,
+        page_url: state.pageUrl,
+        updated_body: state.preview.updatedBody,
+        expected_updated_at: state.preview.expectedUpdatedAt,
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Push to Canvas failed"));
+    state.preview = null;
+    pushButton.hidden = true;
+    statusEl.textContent = "";
+    setVideoSlotBadge(card, "Pushed ✓");
+    if (doneEl) {
+      state.revertRevisionId = payload.revert_revision_id || null;
+      if (revertButton) revertButton.hidden = !state.revertRevisionId;
+      doneEl.hidden = false;
+    }
+    gtag("event", "youtube_slot_pushed_to_canvas", { page_url: state.pageUrl, slot_index: state.slotIndex });
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.color = "#b42318";
+    pushButton.disabled = false;
+    setVideoSlotBadge(card, "Push failed");
+  }
+}
+
+async function revertVideoSlot(card) {
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state || !state.revertRevisionId) return;
+  const confirmed = window.confirm(
+    `This restores the Canvas page "${state.pageUrl}" to the version before your last push. Continue?`
+  );
+  if (!confirmed) return;
+
+  const revertButton = card.querySelector("[data-revert-slot]");
+  const statusEl = card.querySelector("[data-slot-status]");
+  if (revertButton) revertButton.disabled = true;
+  statusEl.style.color = "";
+  statusEl.textContent = "Reverting Canvas page…";
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots/revert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: state.courseId,
+        page_url: state.pageUrl,
+        revision_id: state.revertRevisionId,
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Revert failed"));
+    state.revertRevisionId = null;
+    resetVideoSlotActions(card, state);
+    statusEl.textContent = "Reverted to the previous version.";
+    statusEl.style.color = "#12794b";
+    gtag("event", "youtube_slot_reverted", { page_url: state.pageUrl, slot_index: state.slotIndex });
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.color = "#b42318";
+    if (revertButton) revertButton.disabled = false;
+  }
+}
+
+async function refineVideoSlotSearch(card) {
+  if (!card) return;
+  const state = videoSlotState.get(card.dataset.slotKey);
+  if (!state) return;
+  const contextInput = card.querySelector("[data-slot-context]");
+  const additionalContext = (contextInput?.value || "").trim();
+  const refineButton = card.querySelector("[data-refine-slot-search]");
+  const statusEl = card.querySelector("[data-slot-refine-status]");
+  const carousel = card.querySelector("[data-slot-carousel]");
+  const searchUsedEl = card.querySelector("[data-slot-search-used]");
+
+  refineButton.disabled = true;
+  statusEl.style.color = "";
+  statusEl.textContent = "Refining with VAL…";
+  try {
+    const response = await canvasFetch("/canvas/pages/video-slots/refine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: state.courseId,
+        page_url: state.pageUrl,
+        slot_index: state.slotIndex,
+        additional_context: additionalContext,
+        aqf_level: currentAqfLevel(),
+      }),
+    });
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Refine failed"));
+
+    const videos = payload.videos || [];
+    state.videosById = new Map(videos.map(video => [video.id, video]));
+    state.selected.clear();
+    if (carousel) {
+      carousel.innerHTML = renderVideoSlotCarouselItems(videos);
+      carousel.scrollLeft = 0;
+    }
+    if (searchUsedEl) searchUsedEl.textContent = `Search used: ${payload.search_query || "(none)"}`;
+    resetVideoSlotActions(card, state);
+    statusEl.textContent = videos.length ? "Updated the matches below." : "No matching videos found.";
+    gtag("event", "youtube_slot_refined", { page_url: state.pageUrl, slot_index: state.slotIndex });
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.color = "#b42318";
+  } finally {
+    refineButton.disabled = false;
+  }
 }
 
 async function previewVideoSlot(card) {
@@ -2637,7 +3025,8 @@ async function runYouTubeSearch(queryOverride) {
   setYouTubeStatus("Searching YouTube...");
   youtubeResults.innerHTML = "";
   try {
-    const response = await fetch(`${API_BASE}/youtube/search?q=${encodeURIComponent(query)}&limit=8`);
+    const searchQuery = searchQueryForAqf(query);
+    const response = await fetch(`${API_BASE}/youtube/search?q=${encodeURIComponent(searchQuery)}&limit=8`);
     const payload = await readResponsePayload(response);
     if (!response.ok) throw new Error(extractErrorMessage(payload, "YouTube search failed"));
     youtubeLatestResults = payload.results || [];
@@ -2760,6 +3149,24 @@ function formatYouTubeDuration(value) {
   return `${minutes}:${paddedSeconds}`;
 }
 
+function renderYouTubeThumb(video) {
+  const videoId = String(video.id || "").trim();
+  const duration = video.duration ? formatYouTubeDuration(video.duration) : "";
+  const thumb = video.thumbnail_url
+    ? `<img class="yt-thumb-img" src="${escapeHtml(video.thumbnail_url)}" alt="" loading="lazy">`
+    : `<span class="youtube-thumb-placeholder">YT</span>`;
+  const playBadge = videoId
+    ? `<button type="button" class="yt-thumb-play" ${youTubePreviewButtonAttrs(video)} aria-label="Play preview" title="Play preview">▶</button>`
+    : "";
+  return `
+    <span class="yt-thumb">
+      ${thumb}
+      ${playBadge}
+      ${duration ? `<span class="yt-thumb-duration">${escapeHtml(duration)}</span>` : ""}
+    </span>
+  `;
+}
+
 function renderYouTubePreview(video) {
   const videoId = String(video.id || "").trim();
   if (!videoId) {
@@ -2781,11 +3188,23 @@ function renderYouTubePreview(video) {
   `;
 }
 
+function youTubePreviewButtonAttrs(video) {
+  return [
+    `data-preview-youtube="${escapeHtml(video.id || "")}"`,
+    `data-video-title="${escapeHtml(video.title || "YouTube video")}"`,
+    `data-video-channel="${escapeHtml(video.channel_title || "")}"`,
+    `data-video-url="${escapeHtml(video.url || "")}"`,
+  ].join(" ");
+}
+
 function renderYouTubeVideoActions(video, trackOpen = false) {
   const videoId = String(video.id || "").trim();
   const title = video.title || "YouTube video";
   return `
     <span class="youtube-video-actions">
+      ${videoId
+        ? `<button type="button" class="youtube-preview-button" ${youTubePreviewButtonAttrs(video)}>Preview</button>`
+        : ""}
       <a href="${escapeHtml(video.url)}" target="_blank" rel="noopener" ${trackOpen ? `data-video-link="${escapeHtml(videoId)}"` : ""}>Open video</a>
       ${videoId
         ? `<button type="button" class="youtube-embed-copy" data-copy-youtube-embed="${escapeHtml(videoId)}" data-video-title="${escapeHtml(title)}" title="Copy embed code" aria-label="Copy embed code">&lt;/&gt;</button>`
@@ -2794,17 +3213,96 @@ function renderYouTubeVideoActions(video, trackOpen = false) {
   `;
 }
 
-async function handleYouTubeEmbedCopy(event) {
-  const button = event.target.closest("[data-copy-youtube-embed]");
-  if (!button) return;
-  event.preventDefault();
-  event.stopPropagation();
-  const videoId = button.dataset.copyYoutubeEmbed || "";
+async function openYouTubePreviewModal(button, event) {
+  if (!youtubePreviewModal || !button) return;
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  const videoId = button.dataset.previewYoutube || "";
   const title = button.dataset.videoTitle || "YouTube video";
+  const channel = button.dataset.videoChannel || "";
+  const url = button.dataset.videoUrl || `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+  if (!videoId) return;
+
+  if (youtubePreviewTitle) youtubePreviewTitle.textContent = title;
+  if (youtubePreviewChannel) youtubePreviewChannel.textContent = channel || "YouTube preview";
+  if (youtubePreviewFrame) {
+    youtubePreviewFrame.src = `${youtubeEmbedUrl(videoId)}?autoplay=1&rel=0`;
+    youtubePreviewFrame.title = title;
+  }
+  if (youtubePreviewOpen) youtubePreviewOpen.href = url;
+  if (youtubePreviewCopy) {
+    youtubePreviewCopy.dataset.videoId = videoId;
+    youtubePreviewCopy.dataset.videoTitle = title;
+    youtubePreviewCopy.textContent = "Copy embed code";
+    youtubePreviewCopy.classList.remove("copied");
+  }
+  renderYouTubeTranscriptLoading();
+  youtubePreviewModal.showModal();
+  loadYouTubeTranscript(videoId);
+}
+
+function closeYouTubePreviewModal() {
+  if (youtubePreviewModal?.open) youtubePreviewModal.close();
+}
+
+function resetYouTubePreviewModal() {
+  if (youtubePreviewFrame) youtubePreviewFrame.src = "";
+}
+
+function renderYouTubeTranscriptLoading() {
+  if (youtubePreviewTranscriptMeta) youtubePreviewTranscriptMeta.textContent = "";
+  if (youtubePreviewTranscriptBody) {
+    youtubePreviewTranscriptBody.innerHTML = `<p class="muted">Loading transcript...</p>`;
+  }
+}
+
+async function loadYouTubeTranscript(videoId) {
+  if (!youtubePreviewTranscriptBody) return;
+  try {
+    const response = await fetch(`${API_BASE}/youtube/videos/${encodeURIComponent(videoId)}/transcript`);
+    const payload = await readResponsePayload(response);
+    if (!response.ok) throw new Error(extractErrorMessage(payload, "Transcript could not be loaded"));
+    renderYouTubeTranscript(payload);
+  } catch (err) {
+    if (youtubePreviewTranscriptMeta) youtubePreviewTranscriptMeta.textContent = "";
+    youtubePreviewTranscriptBody.innerHTML = `<p class="muted">${escapeHtml(err.message || "Transcript could not be loaded.")}</p>`;
+  }
+}
+
+function renderYouTubeTranscript(payload) {
+  const segments = payload.segments || [];
+  const source = payload.is_generated ? "auto-generated" : "captions";
+  if (youtubePreviewTranscriptMeta) {
+    youtubePreviewTranscriptMeta.textContent = payload.available
+      ? `${payload.language || "Transcript"} · ${source}`
+      : "";
+  }
+  if (!segments.length) {
+    youtubePreviewTranscriptBody.innerHTML = `<p class="muted">${escapeHtml(payload.message || "No transcript was found for this video.")}</p>`;
+    return;
+  }
+  youtubePreviewTranscriptBody.innerHTML = segments.map(segment => `
+    <p class="youtube-transcript-line">
+      <span>${escapeHtml(segment.time || "")}</span>
+      <button type="button" data-youtube-seek="${escapeHtml(String(segment.start ?? 0))}">${escapeHtml(segment.text || "")}</button>
+    </p>
+  `).join("");
+  youtubePreviewTranscriptBody.querySelectorAll("[data-youtube-seek]").forEach(button => {
+    button.addEventListener("click", () => {
+      const seconds = Math.max(0, parseFloat(button.dataset.youtubeSeek || "0") || 0);
+      const videoId = youtubePreviewCopy?.dataset.videoId || payload.video_id || "";
+      if (youtubePreviewFrame && videoId) {
+        youtubePreviewFrame.src = `${youtubeEmbedUrl(videoId)}?autoplay=1&rel=0&start=${Math.floor(seconds)}`;
+      }
+    });
+  });
+}
+
+async function copyYouTubeEmbedCode(videoId, title, feedbackButton) {
   const code = youtubeEmbedCode(videoId, title);
   try {
     await navigator.clipboard.writeText(code);
-    showEmbedCopied(button);
+    showEmbedCopied(feedbackButton);
   } catch {
     const textarea = document.createElement("textarea");
     textarea.value = code;
@@ -2815,8 +3313,18 @@ async function handleYouTubeEmbedCopy(event) {
     textarea.select();
     document.execCommand("copy");
     textarea.remove();
-    showEmbedCopied(button);
+    showEmbedCopied(feedbackButton);
   }
+}
+
+async function handleYouTubeEmbedCopy(event) {
+  const button = event.target.closest("[data-copy-youtube-embed]");
+  if (!button) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const videoId = button.dataset.copyYoutubeEmbed || "";
+  const title = button.dataset.videoTitle || "YouTube video";
+  await copyYouTubeEmbedCode(videoId, title, button);
 }
 
 function showEmbedCopied(button) {

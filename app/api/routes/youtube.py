@@ -43,6 +43,14 @@ async def search_youtube_videos(
     return {"results": videos}
 
 
+@router.get("/videos/{video_id}/transcript")
+async def youtube_video_transcript(video_id: str) -> dict:
+    try:
+        return await youtube_search.get_transcript(video_id)
+    except youtube_search.YouTubeAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
 @router.post("/chat", response_model=YouTubeChatResponse)
 async def chat_about_youtube_videos(body: YouTubeChatRequest) -> YouTubeChatResponse:
     try:

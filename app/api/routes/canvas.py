@@ -97,6 +97,11 @@ class VideoSlotSuggestionRequest(BaseModel):
     aqf_level: int | None = Field(default=None, ge=1, le=10)
 
 
+class AQFLevelSuggestionRequest(BaseModel):
+    course_id: int
+    course_name: str = ""
+
+
 class VideoSlotPreviewRequest(BaseModel):
     course_id: int
     page_url: str
@@ -338,6 +343,49 @@ def _module_name_for_page(course: dict, page_url: str) -> str:
     return ""
 
 
+def _aqf_search_modifier(aqf_level: int | None) -> str:
+    if not aqf_level:
+        return ""
+    if aqf_level <= 2:
+        return "introductory basics"
+    if aqf_level <= 4:
+        return "beginner practical"
+    if aqf_level <= 6:
+        return "applied professional"
+    if aqf_level <= 8:
+        return "advanced professional"
+    return "expert research"
+
+
+def _search_query_for_aqf(query: str, aqf_level: int | None) -> str:
+    query = (query or "").strip()
+    modifier = _aqf_search_modifier(aqf_level)
+    if not query or not modifier:
+        return query
+    lowered = query.lower()
+    if any(term in lowered for term in ("introductory", "beginner", "basics", "applied", "professional", "advanced", "expert", "research")):
+        return query
+    return f"{query} {modifier}"
+
+
+@router.post("/courses/aqf-suggestion")
+async def suggest_course_aqf_level(body: AQFLevelSuggestionRequest) -> dict:
+    try:
+        course = await canvas_lms.read_course(body.course_id)
+        if body.course_name and course.get("course"):
+            course["course"]["name"] = body.course_name
+        suggestion = await asyncio.to_thread(lambda: canvas_chat.suggest_aqf_level(course))
+    except canvas_lms.CanvasConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except canvas_lms.CanvasAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except canvas_chat.CanvasChatConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except canvas_chat.CanvasChatError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return suggestion
+
+
 @router.post("/pages/video-slots")
 async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
     try:
@@ -377,9 +425,9 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
 
             async def resolve_query(existing_search: str) -> str:
                 if existing_search:
-                    return existing_search
+                    return _search_query_for_aqf(existing_search, body.aqf_level)
                 try:
-                    return await asyncio.to_thread(
+                    query = await asyncio.to_thread(
                         lambda: canvas_chat.generate_search_query(
                             page_title=page["title"],
                             page_text=page_text,
@@ -389,9 +437,11 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
                             aqf_level=body.aqf_level,
                         )
                     )
+                    return _search_query_for_aqf(query, body.aqf_level)
                 except (canvas_chat.CanvasChatConfigError, canvas_chat.CanvasChatError):
                     fallback_queries = _build_youtube_queries("", page_context)
-                    return fallback_queries[0] if fallback_queries else ""
+                    fallback_query = fallback_queries[0] if fallback_queries else ""
+                    return _search_query_for_aqf(fallback_query, body.aqf_level)
 
             slot_results = []
             if slots:
@@ -462,6 +512,7 @@ async def refine_video_slot_search(body: VideoSlotRefineRequest) -> dict:
                 aqf_level=body.aqf_level,
             )
         )
+        query = _search_query_for_aqf(query, body.aqf_level)
         videos = await youtube_search.search_videos(query, limit=6) if query else []
     except canvas_lms.CanvasConfigError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -500,10 +551,13 @@ async def preview_video_slot(body: VideoSlotPreviewRequest) -> dict:
             )
             descriptions.append(description)
 
-        description_html, embed_html = video_slots.render_slot_html(slot, body.videos, descriptions)
-        replacement_html = f"{description_html}\n{embed_html}"
-        preview_standalone_html = video_slots.wrap_for_preview(description_html, embed_html)
-        updated_body = video_slots.apply_slot(page["body"], body.slot_index, description_html, embed_html)
+        rendered = video_slots.render_slot_html(slot, body.videos, descriptions)
+        replacement_html = "\n".join(
+            f"{description_html}\n{embed_html}"
+            for description_html, embed_html in rendered
+        )
+        preview_standalone_html = video_slots.wrap_for_preview(rendered)
+        updated_body = video_slots.apply_slot(page["body"], body.slot_index, rendered)
     except canvas_lms.CanvasConfigError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except canvas_lms.CanvasAPIError as exc:
