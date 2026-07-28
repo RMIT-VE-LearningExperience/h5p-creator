@@ -254,6 +254,10 @@ def generate_slot_description(
         )
     except Exception as exc:
         msg = str(exc)
+        if any(x in msg for x in ("401", "session has expired", "token is invalid")):
+            raise CanvasChatError(
+                "VAL authentication expired. The server credential needs to be refreshed."
+            ) from exc
         if any(x in msg for x in ("403", "Forbidden", "forbidden", "blocked", "unavailable")):
             raise CanvasChatError("VAL_NETWORK_ERROR") from exc
         raise CanvasChatError(f"VAL description generation failed: {msg}") from exc
@@ -267,6 +271,13 @@ def generate_slot_description(
     if not description:
         raise CanvasChatError("VAL returned no description.")
     return description
+
+
+def fallback_slot_description(video: dict[str, Any], duration_label: str) -> str:
+    title = re.sub(r"\s+", " ", str(video.get("title") or "")).strip().rstrip(".")
+    topic = title or "the topic demonstrated"
+    runtime = f" ({duration_label} mins)" if duration_label else ""
+    return f"Watch this{runtime} video to learn about {topic}."
 
 
 _SEARCH_QUERY_SYSTEM_PROMPT = """\

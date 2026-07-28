@@ -539,16 +539,21 @@ async def preview_video_slot(body: VideoSlotPreviewRequest) -> dict:
         slot = slots[body.slot_index]
 
         descriptions = []
+        used_description_fallback = False
         for video in body.videos:
             duration_label = video_slots.format_duration(video.get("duration") or "")
-            description = await asyncio.to_thread(
-                canvas_chat.generate_slot_description,
-                video,
-                duration_label,
-                slot.original_description_text,
-                {"title": page["title"]},
-                body.aqf_level,
-            )
+            try:
+                description = await asyncio.to_thread(
+                    canvas_chat.generate_slot_description,
+                    video,
+                    duration_label,
+                    slot.original_description_text,
+                    {"title": page["title"]},
+                    body.aqf_level,
+                )
+            except (canvas_chat.CanvasChatConfigError, canvas_chat.CanvasChatError):
+                description = canvas_chat.fallback_slot_description(video, duration_label)
+                used_description_fallback = True
             descriptions.append(description)
 
         rendered = video_slots.render_slot_html(slot, body.videos, descriptions)
@@ -573,6 +578,7 @@ async def preview_video_slot(body: VideoSlotPreviewRequest) -> dict:
         "preview_standalone_html": preview_standalone_html,
         "updated_body": updated_body,
         "expected_updated_at": page["updated_at"],
+        "description_fallback": used_description_fallback,
     }
 
 
