@@ -447,19 +447,20 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
                     return _search_query_for_aqf(fallback_query, body.aqf_level)
 
             slot_results = []
-            if slots:
-                for slot in slots:
-                    query = await resolve_query(slot.suggested_search)
-                    videos = await youtube_search.search_videos(query, limit=6) if query else []
-                    slot_results.append({
-                        "index": slot.index,
-                        "slot_id": slot.slot_id,
-                        "suggested_search": slot.suggested_search,
-                        "original_description_text": slot.original_description_text,
-                        "search_query": query,
-                        "already_filled": slot.already_filled,
-                        "videos": videos,
-                    })
+            editable_slots = slots or [video_slots.make_append_slot(page["body"])]
+            for slot in editable_slots:
+                query = await resolve_query(slot.suggested_search)
+                videos = await youtube_search.search_videos(query, limit=6) if query else []
+                slot_results.append({
+                    "index": slot.index,
+                    "slot_id": slot.slot_id,
+                    "suggested_search": slot.suggested_search,
+                    "original_description_text": slot.original_description_text,
+                    "search_query": query,
+                    "already_filled": slot.already_filled,
+                    "insertion_mode": slot.insertion_mode,
+                    "videos": videos,
+                })
             results.append({
                 "title": page["title"],
                 "url": page["url"],

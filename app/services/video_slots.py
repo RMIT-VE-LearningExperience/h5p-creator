@@ -16,6 +16,7 @@ _SUGGESTED_SEARCH_RE = re.compile(
 )
 _YOUTUBE_IFRAME_SRC_RE = re.compile(r"(?:youtube\.com/embed/|youtu\.be/)", re.IGNORECASE)
 _SLOT_ID_ATTR = "data-video-finder-slot-id"
+_APPEND_SLOT_PREFIX = "vf-append-"
 _ISO8601_DURATION_RE = re.compile(
     r"^PT(?:(?P<hours>\d+)H)?(?:(?P<minutes>\d+)M)?(?:(?P<seconds>\d+)S)?$"
 )
@@ -37,6 +38,7 @@ class VideoSlot:
     suggested_search: str
     original_description_text: str
     already_filled: bool = False
+    insertion_mode: str = "replace"
 
 
 def _closest_block(node: object) -> Tag | None:
@@ -249,6 +251,27 @@ def find_video_slots(html: str) -> list[VideoSlot]:
     return _find_slots_in_soup(soup)
 
 
+def make_append_slot(html: str, slot_id: str = "") -> VideoSlot:
+    """Create a virtual slot for pages that have no editable video section."""
+    if not slot_id:
+        slot_id = (
+            _APPEND_SLOT_PREFIX
+            + uuid.uuid5(uuid.NAMESPACE_URL, html or "").hex[:16]
+        )
+    soup = BeautifulSoup("", "html.parser")
+    description_tag = soup.new_tag("p")
+    embed_tag = soup.new_tag("p")
+    return VideoSlot(
+        index=0,
+        slot_id=slot_id,
+        description_tag=description_tag,
+        embed_tag=embed_tag,
+        suggested_search="",
+        original_description_text="",
+        insertion_mode="append",
+    )
+
+
 def find_video_slot(
     html: str,
     *,
@@ -257,7 +280,12 @@ def find_video_slot(
 ) -> VideoSlot | None:
     slots = find_video_slots(html)
     if slot_id:
-        return next((slot for slot in slots if slot.slot_id == slot_id), None)
+        match = next((slot for slot in slots if slot.slot_id == slot_id), None)
+        if match is not None:
+            return match
+        if slot_id.startswith(_APPEND_SLOT_PREFIX) and not slots:
+            return make_append_slot(html, slot_id)
+        return None
     if slot_index is not None and 0 <= slot_index < len(slots):
         return slots[slot_index]
     return None
@@ -315,6 +343,13 @@ def render_slot_html(
 
 
 def render_current_slot_html(slot: VideoSlot) -> list[tuple[str, str]]:
+    if slot.insertion_mode == "append":
+        return [
+            (
+                "<p>No video is currently present at the end of this page.</p>",
+                "",
+            )
+        ]
     description_html = str(slot.description_tag) if slot.description_tag is not None else ""
     return [(description_html, str(slot.embed_tag))]
 
@@ -408,6 +443,23 @@ def apply_slot(
     soup = BeautifulSoup(html or "", "html.parser")
     slots = _find_slots_in_soup(soup)
     slot = next((item for item in slots if slot_id and item.slot_id == slot_id), None)
+    if (
+        slot is None
+        and slot_id.startswith(_APPEND_SLOT_PREFIX)
+        and not slots
+    ):
+        target = soup.body or soup
+        section = soup.new_tag("div")
+        section["data-video-finder-generated-section"] = "true"
+        for description_html, embed_html in rendered:
+            description_fragment = BeautifulSoup(description_html, "html.parser")
+            embed_fragment = BeautifulSoup(embed_html, "html.parser")
+            for child in list(description_fragment.contents):
+                section.append(child)
+            for child in list(embed_fragment.contents):
+                section.append(child)
+        target.append(section)
+        return str(soup)
     if not slot_id and 0 <= slot_index < len(slots):
         slot = slots[slot_index]
     if slot is None:

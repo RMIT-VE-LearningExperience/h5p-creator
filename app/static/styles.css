@@ -1625,6 +1625,10 @@ button:disabled {
   color: var(--rmit-red);
 }
 
+.video-slot-flag-add {
+  color: var(--muted);
+}
+
 .video-slot-badge {
   flex-shrink: 0;
   padding: 4px 12px;
@@ -1986,6 +1990,10 @@ button:disabled {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   align-items: stretch;
+}
+
+.video-slot-preview-wrap[hidden] {
+  display: none;
 }
 
 .video-slot-comparison-pane {

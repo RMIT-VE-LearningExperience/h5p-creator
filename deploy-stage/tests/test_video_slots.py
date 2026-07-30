@@ -98,6 +98,36 @@ class VideoSlotsTests(unittest.TestCase):
         self.assertIn("youtube.com/embed/current-video", preview)
         self.assertIn("flatlock seams", preview)
 
+    def test_page_without_video_section_gets_an_append_slot(self):
+        html = "<h2>Machine safety</h2><p>Wear PPE before operating equipment.</p>"
+        slot = video_slots.make_append_slot(html)
+        resolved = video_slots.find_video_slot(
+            html, slot_id=slot.slot_id, slot_index=slot.index
+        )
+
+        self.assertIsNotNone(resolved)
+        self.assertEqual(resolved.insertion_mode, "append")
+
+    def test_append_slot_becomes_a_replaceable_filled_slot(self):
+        html = "<h2>Machine safety</h2><p>Wear PPE before operating equipment.</p>"
+        slot = video_slots.make_append_slot(html)
+        rendered = video_slots.render_slot_html(
+            slot,
+            [{"id": "safety-video", "title": "Machine safety"}],
+            ["Watch this (3:00 mins) video to learn about machine safety."],
+        )
+
+        updated = video_slots.apply_slot(
+            html, slot.index, rendered, slot_id=slot.slot_id
+        )
+        found = video_slots.find_video_slots(updated)
+
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0].slot_id, slot.slot_id)
+        self.assertTrue(found[0].already_filled)
+        self.assertIn("Wear PPE before operating equipment.", updated)
+        self.assertIn("youtube.com/embed/safety-video", updated)
+
 
 if __name__ == "__main__":
     unittest.main()

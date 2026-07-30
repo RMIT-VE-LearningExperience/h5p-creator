@@ -2497,6 +2497,7 @@ function renderVideoSlots(courseId, pages) {
         preview: null,
         revertRevisionId: null,
         alreadyFilled: Boolean(slot.already_filled),
+        insertionMode: slot.insertion_mode || "replace",
       });
       const description = slot.original_description_text || "";
       const pageSummary = page.page_summary || "";
@@ -2506,8 +2507,9 @@ function renderVideoSlots(courseId, pages) {
             <span class="video-slot-header-text">
               <strong>${escapeHtml(page.title || page.url || "Canvas page")}</strong>
               ${slot.already_filled ? `<span class="video-slot-flag">Currently has a video · pick a replacement</span>` : ""}
+              ${slot.insertion_mode === "append" ? `<span class="video-slot-flag video-slot-flag-add">No video section found · add one at the end of the page</span>` : ""}
             </span>
-            <span class="video-slot-badge" data-slot-badge>${slot.already_filled ? "Replace current video" : "Needs a video"}</span>
+            <span class="video-slot-badge" data-slot-badge>${slot.already_filled ? "Replace current video" : slot.insertion_mode === "append" ? "Add video" : "Needs a video"}</span>
           </button>
           <div class="video-slot-body" data-slot-body hidden>
             ${pageSummary ? `
@@ -2567,7 +2569,7 @@ function renderVideoSlots(courseId, pages) {
       `);
     });
   });
-  youtubeSlotResults.innerHTML = cards.join("") || `<p class="muted">No video slots or suggestions were found for the selected Canvas content.</p>`;
+  youtubeSlotResults.innerHTML = cards.join("") || `<p class="muted">No readable Canvas pages were returned for this selection.</p>`;
   if (youtubeSlotPanel) youtubeSlotPanel.hidden = false;
 }
 
@@ -2599,7 +2601,10 @@ function setVideoSlotBadge(card, text) {
 
 function selectionBadgeText(state) {
   const n = state.selected.size;
-  if (!n) return state.alreadyFilled ? "Replace current video" : "Needs a video";
+  if (!n) {
+    if (state.alreadyFilled) return "Replace current video";
+    return state.insertionMode === "append" ? "Add video" : "Needs a video";
+  }
   return `${n} selected`;
 }
 
