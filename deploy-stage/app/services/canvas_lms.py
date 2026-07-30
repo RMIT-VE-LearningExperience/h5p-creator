@@ -201,13 +201,17 @@ async def _get_bytes(path_or_url: str, params: dict[str, Any] | None = None) -> 
     return response.content
 
 
-async def _get_paginated(path: str, params: dict[str, Any] | None = None, limit: int = 100) -> list[dict[str, Any]]:
+async def _get_paginated(
+    path: str,
+    params: dict[str, Any] | None = None,
+    limit: int | None = 100,
+) -> list[dict[str, Any]]:
     url = urljoin(_base_api_url(), path.lstrip("/"))
     items: list[dict[str, Any]] = []
     request_params = dict(params or {})
-    request_params.setdefault("per_page", min(limit, 100))
+    request_params.setdefault("per_page", min(limit, 100) if limit is not None else 100)
     async with httpx.AsyncClient(headers=_client_headers(), timeout=30.0) as client:
-        while url and len(items) < limit:
+        while url and (limit is None or len(items) < limit):
             response = await client.get(url, params=request_params)
             request_params = None
             if response.status_code == 401:
@@ -222,7 +226,7 @@ async def _get_paginated(path: str, params: dict[str, Any] | None = None, limit:
             else:
                 break
             url = _next_link(response.headers.get("link"))
-    return items[:limit]
+    return items[:limit] if limit is not None else items
 
 
 def _course_summary(course: dict[str, Any]) -> dict[str, Any]:
@@ -367,7 +371,7 @@ async def read_course(course_id: int) -> dict[str, Any]:
     modules = await _get_optional_list(
         f"courses/{course_id}/modules",
         {"include[]": ["items"]},
-        100,
+        None,
     )
     sections = await _get_optional_list(
         f"courses/{course_id}/sections",
@@ -376,7 +380,11 @@ async def read_course(course_id: int) -> dict[str, Any]:
     )
     discussions = await _get_optional_list(f"courses/{course_id}/discussion_topics", {"only_announcements": "false"}, 50)
     quizzes = await _get_optional_list(f"courses/{course_id}/quizzes", None, 50)
-    pages = await _get_optional_list(f"courses/{course_id}/pages", {"sort": "title", "order": "asc"}, 50)
+    pages = await _get_optional_list(
+        f"courses/{course_id}/pages",
+        {"sort": "title", "order": "asc"},
+        None,
+    )
     activity = await _get_optional_value(f"courses/{course_id}/analytics/activity", None)
 
     published_assignments = [item for item in assignments if item.get("published")]
@@ -578,7 +586,11 @@ def _file_extension(filename: str) -> str:
     return match.group(1).lower() if match else ""
 
 
-async def _get_optional_list(path: str, params: dict[str, Any] | None, limit: int) -> list[dict[str, Any]]:
+async def _get_optional_list(
+    path: str,
+    params: dict[str, Any] | None,
+    limit: int | None,
+) -> list[dict[str, Any]]:
     try:
         return await _get_paginated(path, params=params, limit=limit)
     except CanvasAPIError:

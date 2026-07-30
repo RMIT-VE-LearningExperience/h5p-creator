@@ -94,6 +94,8 @@ const youtubeCanvasSourcePicker = document.getElementById("youtube-canvas-source
 const youtubeCanvasCourseTitle = document.getElementById("youtube-canvas-course-title");
 const youtubeCanvasModuleList = document.getElementById("youtube-canvas-module-list");
 const youtubeCanvasPageList = document.getElementById("youtube-canvas-page-list");
+const youtubeCanvasContentSearch = document.getElementById("youtube-canvas-content-search");
+const youtubeCanvasContentSearchCount = document.getElementById("youtube-canvas-content-search-count");
 const youtubeCanvasSuggestButton = document.getElementById("youtube-canvas-suggest-button");
 const youtubeAqfLevelSelect = document.getElementById("youtube-aqf-level");
 const youtubeAqfSuggestion = document.getElementById("youtube-aqf-suggestion");
@@ -1962,6 +1964,7 @@ const youtubeSelectedVideos = new Map();
 let youtubeLatestResults = [];
 let youtubeCanvasCourseContext = null;
 const videoSlotState = new Map();
+const sharedVideoSuggestionPool = new Map();
 let youtubeContentChosen = false;
 let youtubeAqfSuggestionRequestId = 0;
 
@@ -2070,6 +2073,9 @@ function initYouTubeSearch() {
       }
     });
   }
+  if (youtubeCanvasContentSearch) {
+    youtubeCanvasContentSearch.addEventListener("input", filterYouTubeCanvasSources);
+  }
   if (youtubeCanvasCourseResults) {
     youtubeCanvasCourseResults.addEventListener("click", (e) => {
       const button = e.target.closest("button[data-youtube-canvas-course-id]");
@@ -2089,6 +2095,16 @@ function initYouTubeSearch() {
       if (scrollButton) {
         const carousel = scrollButton.closest(".video-slot-carousel-wrap")?.querySelector("[data-slot-carousel]");
         if (carousel) carousel.scrollBy({ left: Number(scrollButton.dataset.slotScroll) * carousel.clientWidth * 0.8, behavior: "smooth" });
+        return;
+      }
+      const sharedToggle = e.target.closest("[data-slot-shared-toggle]");
+      if (sharedToggle) {
+        const card = sharedToggle.closest(".video-slot-card");
+        const state = videoSlotState.get(card?.dataset.slotKey);
+        if (card && state) {
+          state.showShared = !state.showShared;
+          renderVideoSuggestionsForCard(card, state);
+        }
         return;
       }
       const youtubePreviewButton = e.target.closest("[data-preview-youtube]");
@@ -2308,21 +2324,46 @@ function renderYouTubeCanvasSources(payload) {
   youtubeCanvasModuleList.innerHTML = modules.length
     ? modules.map(module => {
         const pageCount = (module.items || []).filter(item => item.type === "Page" && item.page_url).length;
-        return `<label class="canvas-source-option">
+        return `<label class="canvas-source-option" data-youtube-source-option data-source-search="${escapeHtml(module.name || "")}">
           <input type="checkbox" data-youtube-canvas-module-id="${escapeHtml(module.id)}">
           <span><strong>${escapeHtml(module.name || "Untitled module")}</strong><small>${pageCount} readable page${pageCount === 1 ? "" : "s"}</small></span>
         </label>`;
       }).join("")
     : `<p class="muted">No modules with readable pages.</p>`;
   youtubeCanvasPageList.innerHTML = pages.length
-    ? pages.map(page => `<label class="canvas-source-option">
+    ? pages.map(page => `<label class="canvas-source-option" data-youtube-source-option data-source-search="${escapeHtml(`${page.title || ""} ${page.url || ""}`)}">
         <input type="checkbox" data-youtube-canvas-page-url="${escapeHtml(page.url || "")}">
         <span><strong>${escapeHtml(page.title || page.url || "Untitled page")}</strong><small>${page.published ? "Published" : "Unpublished"}</small></span>
       </label>`).join("")
     : `<p class="muted">No readable course pages.</p>`;
   youtubeCanvasCourseResults.innerHTML = "";
+  if (youtubeCanvasContentSearch) youtubeCanvasContentSearch.value = "";
   youtubeCanvasSourcePicker.hidden = false;
+  filterYouTubeCanvasSources();
   updateYouTubeCanvasSuggestButton();
+}
+
+function filterYouTubeCanvasSources() {
+  const query = (youtubeCanvasContentSearch?.value || "").trim().toLowerCase();
+  const filterList = (list) => {
+    if (!list) return { visible: 0, total: 0 };
+    const options = [...list.querySelectorAll("[data-youtube-source-option]")];
+    options.forEach(option => {
+      const searchText = (option.dataset.sourceSearch || "").toLowerCase();
+      option.hidden = Boolean(query) && !searchText.includes(query);
+    });
+    return {
+      visible: options.filter(option => !option.hidden).length,
+      total: options.length,
+    };
+  };
+  const modules = filterList(youtubeCanvasModuleList);
+  const pages = filterList(youtubeCanvasPageList);
+  if (youtubeCanvasContentSearchCount) {
+    youtubeCanvasContentSearchCount.textContent = query
+      ? `${modules.visible} of ${modules.total} modules · ${pages.visible} of ${pages.total} pages`
+      : `${modules.total} modules · ${pages.total} pages`;
+  }
 }
 
 function updateYouTubeCanvasSuggestButton() {
@@ -2433,7 +2474,7 @@ async function suggestVideoSlotsFromCanvasContent() {
       body: JSON.stringify({
         course_id: course.id,
         course_name: course.name || "",
-        page_urls: resolvedPageUrls.slice(0, 10),
+        page_urls: resolvedPageUrls,
         aqf_level: currentAqfLevel(),
       }),
     });
@@ -2463,15 +2504,59 @@ async function suggestVideoSlotsFromCanvasContent() {
   }
 }
 
-function renderVideoSlotCarouselItems(videos) {
+function addVideoToSharedPool(video, originKey, originLabel) {
+  if (!video?.id) return;
+  let entry = sharedVideoSuggestionPool.get(video.id);
+  if (!entry) {
+    entry = { video, origins: new Map() };
+    sharedVideoSuggestionPool.set(video.id, entry);
+  } else {
+    entry.video = video;
+  }
+  entry.origins.set(originKey, originLabel);
+}
+
+function removeOriginFromSharedPool(originKey) {
+  sharedVideoSuggestionPool.forEach((entry, videoId) => {
+    entry.origins.delete(originKey);
+    const selectedElsewhere = [...videoSlotState.values()].some(
+      state => state.selected.has(videoId)
+    );
+    if (!entry.origins.size && !selectedElsewhere) {
+      sharedVideoSuggestionPool.delete(videoId);
+    }
+  });
+}
+
+function sharedVideosForSlot(state) {
+  const ownIds = state.localVideoIds || new Set();
+  const entries = [...sharedVideoSuggestionPool.values()].filter(
+    entry => ownIds.has(entry.video.id) || state.selected.has(entry.video.id) || state.showShared
+  );
+  entries.sort((a, b) => Number(ownIds.has(b.video.id)) - Number(ownIds.has(a.video.id)));
+  return entries.map(entry => ({
+    ...entry.video,
+    suggestion_origin: ownIds.has(entry.video.id)
+      ? ""
+      : [...entry.origins.values()][0] || "",
+  }));
+}
+
+function sharedSuggestionCount(state) {
+  const ownIds = state.localVideoIds || new Set();
+  return [...sharedVideoSuggestionPool.keys()].filter(videoId => !ownIds.has(videoId)).length;
+}
+
+function renderVideoSlotCarouselItems(videos, selectedIds = new Set()) {
   return videos.map(video => `
     <label class="video-slot-carousel-item">
-      <input type="checkbox" data-slot-video-id="${escapeHtml(video.id)}">
+      <input type="checkbox" data-slot-video-id="${escapeHtml(video.id)}"${selectedIds.has(video.id) ? " checked" : ""}>
       <span class="video-slot-carousel-check" aria-hidden="true"></span>
       ${renderYouTubeThumb(video)}
       <span class="video-slot-carousel-meta">
         <strong>${escapeHtml(video.title || "Untitled video")}</strong>
         <span class="video-slot-carousel-sub">${escapeHtml(formatYouTubeMeta(video))}</span>
+        ${video.suggestion_origin ? `<span class="video-slot-origin">Suggested for ${escapeHtml(video.suggestion_origin)}</span>` : ""}
       </span>
       <span class="video-slot-carousel-icons">
         <a href="${escapeHtml(video.url || "")}" target="_blank" rel="noopener" class="yt-icon-action" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
@@ -2481,24 +2566,64 @@ function renderVideoSlotCarouselItems(videos) {
   `).join("") || `<p class="muted">No candidate videos were found for this slot.</p>`;
 }
 
+function syncSharedVideoSuggestions() {
+  youtubeSlotResults.querySelectorAll(".video-slot-card").forEach(card => {
+    const state = videoSlotState.get(card.dataset.slotKey);
+    if (!state) return;
+    renderVideoSuggestionsForCard(card, state);
+  });
+}
+
+function renderVideoSuggestionsForCard(card, state) {
+  const videos = sharedVideosForSlot(state);
+  state.videosById = new Map(videos.map(video => [video.id, video]));
+  const carousel = card.querySelector("[data-slot-carousel]");
+  if (carousel) carousel.innerHTML = renderVideoSlotCarouselItems(videos, state.selected);
+  const toggle = card.querySelector("[data-slot-shared-toggle]");
+  if (toggle) {
+    const count = sharedSuggestionCount(state);
+    toggle.hidden = count === 0;
+    toggle.setAttribute("aria-expanded", String(state.showShared));
+    toggle.textContent = state.showShared
+      ? "Show only suggestions for this page"
+      : `Browse suggestions from other pages (${count})`;
+  }
+}
+
 function renderVideoSlots(courseId, pages) {
   videoSlotState.clear();
+  sharedVideoSuggestionPool.clear();
+  pages.forEach(page => {
+    (page.slots || []).forEach(slot => {
+      const key = `${page.url}::${slot.slot_id || slot.index}`;
+      const originLabel = [page.module_name, page.title || page.url].filter(Boolean).join(" · ");
+      (slot.videos || []).forEach(video => addVideoToSharedPool(video, key, originLabel));
+    });
+  });
   const cards = [];
   pages.forEach(page => {
     (page.slots || []).forEach(slot => {
       const key = `${page.url}::${slot.slot_id || slot.index}`;
-      videoSlotState.set(key, {
+      const originLabel = [page.module_name, page.title || page.url].filter(Boolean).join(" · ");
+      const state = {
         courseId,
         pageUrl: page.url,
         slotIndex: slot.index,
         slotId: slot.slot_id || "",
-        videosById: new Map((slot.videos || []).map(video => [video.id, video])),
+        videosById: new Map(),
+        localVideoIds: new Set((slot.videos || []).map(video => video.id)),
+        originKey: key,
+        originLabel,
+        showShared: false,
         selected: new Set(),
         preview: null,
         revertRevisionId: null,
         alreadyFilled: Boolean(slot.already_filled),
         insertionMode: slot.insertion_mode || "replace",
-      });
+      };
+      const carouselVideos = sharedVideosForSlot(state);
+      state.videosById = new Map(carouselVideos.map(video => [video.id, video]));
+      videoSlotState.set(key, state);
       const description = slot.original_description_text || "";
       const pageSummary = page.page_summary || "";
       cards.push(`
@@ -2523,10 +2648,13 @@ function renderVideoSlots(courseId, pages) {
             <div class="video-slot-carousel-wrap">
               <button type="button" class="video-slot-arrow video-slot-arrow-prev" data-slot-scroll="-1" aria-label="Scroll left">&lsaquo;</button>
               <div class="video-slot-carousel" data-slot-carousel>
-                ${renderVideoSlotCarouselItems(slot.videos || [])}
+                ${renderVideoSlotCarouselItems(carouselVideos)}
               </div>
               <button type="button" class="video-slot-arrow video-slot-arrow-next" data-slot-scroll="1" aria-label="Scroll right">&rsaquo;</button>
             </div>
+            <button type="button" class="video-slot-shared-toggle" data-slot-shared-toggle aria-expanded="false"${sharedSuggestionCount(state) ? "" : " hidden"}>
+              Browse suggestions from other pages (${sharedSuggestionCount(state)})
+            </button>
 
             <div class="video-slot-refine">
               <input type="text" data-slot-context placeholder="Refine these results — add context (e.g. shorter, a specific brand, more about PPE)">
@@ -2811,12 +2939,12 @@ async function refineVideoSlotSearch(card) {
     if (!response.ok) throw new Error(extractErrorMessage(payload, "Refine failed"));
 
     const videos = payload.videos || [];
-    state.videosById = new Map(videos.map(video => [video.id, video]));
+    removeOriginFromSharedPool(state.originKey);
+    videos.forEach(video => addVideoToSharedPool(video, state.originKey, state.originLabel));
+    state.localVideoIds = new Set(videos.map(video => video.id));
     state.selected.clear();
-    if (carousel) {
-      carousel.innerHTML = renderVideoSlotCarouselItems(videos);
-      carousel.scrollLeft = 0;
-    }
+    syncSharedVideoSuggestions();
+    if (carousel) carousel.scrollLeft = 0;
     if (searchUsedEl) searchUsedEl.textContent = `Search used: ${payload.search_query || "(none)"}`;
     resetVideoSlotActions(card, state);
     statusEl.textContent = videos.length ? "Updated the matches below." : "No matching videos found.";
@@ -2835,8 +2963,11 @@ function resetYouTubeCanvasSource() {
   if (youtubeCanvasSourcePicker) youtubeCanvasSourcePicker.hidden = true;
   if (youtubeCanvasModuleList) youtubeCanvasModuleList.innerHTML = "";
   if (youtubeCanvasPageList) youtubeCanvasPageList.innerHTML = "";
+  if (youtubeCanvasContentSearch) youtubeCanvasContentSearch.value = "";
+  if (youtubeCanvasContentSearchCount) youtubeCanvasContentSearchCount.textContent = "";
   if (youtubeCanvasSourceStatus) youtubeCanvasSourceStatus.textContent = "";
   videoSlotState.clear();
+  sharedVideoSuggestionPool.clear();
   if (youtubeSlotResults) youtubeSlotResults.innerHTML = "";
   if (youtubeSlotPanel) youtubeSlotPanel.hidden = true;
   youtubeContentChosen = false;

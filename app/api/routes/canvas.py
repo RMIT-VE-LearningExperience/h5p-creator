@@ -76,14 +76,14 @@ class CanvasFileGenerateRequest(CanvasFileSelectionRequest):
 class CanvasPageSelectionRequest(BaseModel):
     course_id: int
     course_name: str = ""
-    page_urls: list[str] = Field(..., min_length=1, max_length=10)
+    page_urls: list[str] = Field(..., min_length=1)
 
 
 class CanvasVideoSuggestionRequest(BaseModel):
     course_id: int
     course_name: str = ""
-    page_urls: list[str] = Field(default_factory=list, max_length=10)
-    module_ids: list[int] = Field(default_factory=list, max_length=10)
+    page_urls: list[str] = Field(default_factory=list)
+    module_ids: list[int] = Field(default_factory=list)
 
 
 class CanvasPageChatRequest(CanvasPageSelectionRequest):
@@ -93,7 +93,7 @@ class CanvasPageChatRequest(CanvasPageSelectionRequest):
 class VideoSlotSuggestionRequest(BaseModel):
     course_id: int
     course_name: str = ""
-    page_urls: list[str] = Field(..., min_length=1, max_length=10)
+    page_urls: list[str] = Field(..., min_length=1)
     aqf_level: int | None = Field(default=None, ge=1, le=10)
 
 
@@ -225,7 +225,7 @@ async def preview_canvas_files(body: CanvasFileSelectionRequest) -> dict:
 @router.post("/pages/preview")
 async def preview_canvas_pages(body: CanvasPageSelectionRequest) -> dict:
     try:
-        pages = [await canvas_lms.read_page(body.course_id, url) for url in body.page_urls[:10]]
+        pages = [await canvas_lms.read_page(body.course_id, url) for url in body.page_urls]
     except canvas_lms.CanvasAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     return {
@@ -276,7 +276,7 @@ async def _suggest_videos_for_canvas_content(body: CanvasVideoSuggestionRequest)
         if not selected_urls and not selected_modules:
             selected_urls.extend(page.get("url") for page in course.get("pages") or [] if page.get("url"))
 
-        selected_urls = list(dict.fromkeys(selected_urls))[:10]
+        selected_urls = list(dict.fromkeys(selected_urls))
         if not selected_urls:
             raise HTTPException(status_code=400, detail="The selected course content has no readable Canvas pages.")
 
@@ -392,12 +392,11 @@ async def suggest_course_aqf_level(body: AQFLevelSuggestionRequest) -> dict:
 async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
     try:
         course = await canvas_lms.read_course(body.course_id)
-        page_urls = list(dict.fromkeys(url for url in body.page_urls if url))[:10]
+        page_urls = list(dict.fromkeys(url for url in body.page_urls if url))
         if not page_urls:
             raise HTTPException(status_code=400, detail="Select at least one Canvas page.")
 
-        results = []
-        for page_url in page_urls:
+        async def process_page(page_url: str) -> dict:
             page = await canvas_lms.read_page(body.course_id, page_url)
             slots = video_slots.find_video_slots(page["body"])
             before_class = await _before_class_context(course, body.course_id, page_url)
@@ -461,14 +460,25 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
                     "insertion_mode": slot.insertion_mode,
                     "videos": videos,
                 })
-            results.append({
+            return {
                 "title": page["title"],
                 "url": page["url"],
                 "published": page["published"],
+                "module_name": module_name,
                 "before_class_context": before_class,
                 "page_summary": page_summary,
                 "slots": slot_results,
-            })
+            }
+
+        semaphore = asyncio.Semaphore(5)
+
+        async def process_page_bounded(page_url: str) -> dict:
+            async with semaphore:
+                return await process_page(page_url)
+
+        results = await asyncio.gather(
+            *(process_page_bounded(page_url) for page_url in page_urls)
+        )
     except canvas_lms.CanvasConfigError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except canvas_lms.CanvasAPIError as exc:
@@ -635,7 +645,7 @@ async def revert_video_slot(body: VideoSlotRevertRequest) -> dict:
 @router.post("/pages/chat", response_model=CanvasChatResponse)
 async def chat_about_canvas_pages(body: CanvasPageChatRequest) -> CanvasChatResponse:
     try:
-        pages = [await canvas_lms.read_page(body.course_id, url) for url in body.page_urls[:10]]
+        pages = [await canvas_lms.read_page(body.course_id, url) for url in body.page_urls]
         page_context = [
             {
                 "title": page["title"],

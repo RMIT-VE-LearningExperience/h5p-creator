@@ -10,7 +10,7 @@
       document.documentElement.dataset.workspace = pages[window.location.pathname] || "h5p";
     })();
   </script>
-  <link rel="stylesheet" href="/static/styles.css?v=20260731-page-insert-slot">
+  <link rel="stylesheet" href="/static/styles.css?v=20260731-content-search-sharing">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HEFSNZDXB9"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -485,6 +485,11 @@
               </div>
               <button type="button" id="youtube-content-change-button" class="secondary">Change course</button>
             </div>
+            <label class="youtube-content-filter">
+              <span>Search modules and pages</span>
+              <input id="youtube-canvas-content-search" type="search" placeholder="Type a module or page name">
+              <small id="youtube-canvas-content-search-count" class="muted"></small>
+            </label>
             <div class="youtube-canvas-source-columns">
               <fieldset>
                 <legend>Modules</legend>
@@ -671,6 +676,6 @@
     </button>
   </div>
 
-<script src="/static/app.js?v=20260731-page-insert-slot" defer></script>
+<script src="/static/app.js?v=20260731-content-search-sharing" defer></script>
 </body>
 </html>
