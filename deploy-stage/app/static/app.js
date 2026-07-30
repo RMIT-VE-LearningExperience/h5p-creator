@@ -2486,11 +2486,12 @@ function renderVideoSlots(courseId, pages) {
   const cards = [];
   pages.forEach(page => {
     (page.slots || []).forEach(slot => {
-      const key = `${page.url}::${slot.index}`;
+      const key = `${page.url}::${slot.slot_id || slot.index}`;
       videoSlotState.set(key, {
         courseId,
         pageUrl: page.url,
         slotIndex: slot.index,
+        slotId: slot.slot_id || "",
         videosById: new Map((slot.videos || []).map(video => [video.id, video])),
         selected: new Set(),
         preview: null,
@@ -2498,6 +2499,7 @@ function renderVideoSlots(courseId, pages) {
         alreadyFilled: Boolean(slot.already_filled),
       });
       const description = slot.original_description_text || "";
+      const pageSummary = page.page_summary || "";
       cards.push(`
         <article class="video-slot-card" data-slot-key="${escapeHtml(key)}">
           <button type="button" class="video-slot-header" data-slot-toggle aria-expanded="false">
@@ -2505,9 +2507,15 @@ function renderVideoSlots(courseId, pages) {
               <strong>${escapeHtml(page.title || page.url || "Canvas page")}</strong>
               ${slot.already_filled ? `<span class="video-slot-flag">Currently has a video · pick a replacement</span>` : ""}
             </span>
-            <span class="video-slot-badge" data-slot-badge>Needs a video</span>
+            <span class="video-slot-badge" data-slot-badge>${slot.already_filled ? "Replace current video" : "Needs a video"}</span>
           </button>
           <div class="video-slot-body" data-slot-body hidden>
+            ${pageSummary ? `
+              <div class="video-slot-page-context">
+                <strong>About this page</strong>
+                <p>${escapeHtml(pageSummary)}</p>
+              </div>
+            ` : ""}
             ${description ? `<p class="video-slot-original">${escapeHtml(description)}</p>` : ""}
 
             <div class="video-slot-carousel-wrap">
@@ -2532,7 +2540,20 @@ function renderVideoSlots(courseId, pages) {
             </div>
 
             <div class="video-slot-preview-wrap" data-slot-preview-wrap hidden>
-              <iframe class="video-slot-preview-frame" data-slot-preview-frame sandbox="allow-scripts allow-same-origin allow-popups" title="Canvas update preview"></iframe>
+              <section class="video-slot-comparison-pane">
+                <div class="video-slot-comparison-label">
+                  <strong>Before</strong>
+                  <span>Current Canvas content</span>
+                </div>
+                <iframe class="video-slot-preview-frame" data-slot-before-frame sandbox="allow-scripts allow-same-origin allow-popups" title="Current Canvas content"></iframe>
+              </section>
+              <section class="video-slot-comparison-pane">
+                <div class="video-slot-comparison-label">
+                  <strong>After</strong>
+                  <span>Proposed update</span>
+                </div>
+                <iframe class="video-slot-preview-frame" data-slot-after-frame sandbox="allow-scripts allow-same-origin allow-popups" title="Proposed Canvas update"></iframe>
+              </section>
             </div>
 
             <details class="video-slot-details">
@@ -2578,7 +2599,7 @@ function setVideoSlotBadge(card, text) {
 
 function selectionBadgeText(state) {
   const n = state.selected.size;
-  if (!n) return "Needs a video";
+  if (!n) return state.alreadyFilled ? "Replace current video" : "Needs a video";
   return `${n} selected`;
 }
 
@@ -2627,7 +2648,8 @@ async function previewVideoSlot(card) {
   const previewButton = card.querySelector("[data-preview-slot]");
   const pushButton = card.querySelector("[data-push-slot]");
   const previewWrap = card.querySelector("[data-slot-preview-wrap]");
-  const previewFrame = card.querySelector("[data-slot-preview-frame]");
+  const beforeFrame = card.querySelector("[data-slot-before-frame]");
+  const afterFrame = card.querySelector("[data-slot-after-frame]");
   const previewSource = card.querySelector("[data-slot-preview]");
   const statusEl = card.querySelector("[data-slot-status]");
   previewButton.disabled = true;
@@ -2641,6 +2663,7 @@ async function previewVideoSlot(card) {
         course_id: state.courseId,
         page_url: state.pageUrl,
         slot_index: state.slotIndex,
+        slot_id: state.slotId,
         videos,
         aqf_level: currentAqfLevel(),
       }),
@@ -2648,7 +2671,8 @@ async function previewVideoSlot(card) {
     const payload = await readResponsePayload(response);
     if (!response.ok) throw new Error(extractErrorMessage(payload, "Preview failed"));
     state.preview = { updatedBody: payload.updated_body, expectedUpdatedAt: payload.expected_updated_at };
-    if (previewFrame) previewFrame.srcdoc = payload.preview_standalone_html || "";
+    if (beforeFrame) beforeFrame.srcdoc = payload.before_preview_standalone_html || "";
+    if (afterFrame) afterFrame.srcdoc = payload.preview_standalone_html || "";
     if (previewSource) previewSource.textContent = payload.preview_html || "";
     if (previewWrap) previewWrap.hidden = false;
     previewButton.hidden = true;
@@ -2773,6 +2797,7 @@ async function refineVideoSlotSearch(card) {
         course_id: state.courseId,
         page_url: state.pageUrl,
         slot_index: state.slotIndex,
+        slot_id: state.slotId,
         additional_context: additionalContext,
         aqf_level: currentAqfLevel(),
       }),

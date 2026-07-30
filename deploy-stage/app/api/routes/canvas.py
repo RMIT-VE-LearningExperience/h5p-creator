@@ -106,6 +106,7 @@ class VideoSlotPreviewRequest(BaseModel):
     course_id: int
     page_url: str
     slot_index: int = Field(..., ge=0)
+    slot_id: str = Field(default="", max_length=100)
     videos: list[dict] = Field(..., min_length=1, max_length=5)
     aqf_level: int | None = Field(default=None, ge=1, le=10)
 
@@ -128,6 +129,7 @@ class VideoSlotRefineRequest(BaseModel):
     course_name: str = ""
     page_url: str
     slot_index: int = Field(..., ge=0)
+    slot_id: str = Field(default="", max_length=100)
     additional_context: str = Field(default="", max_length=1000)
     aqf_level: int | None = Field(default=None, ge=1, le=10)
 
@@ -400,6 +402,7 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
             slots = video_slots.find_video_slots(page["body"])
             before_class = await _before_class_context(course, body.course_id, page_url)
             page_text = _html_to_text(page["body"])
+            page_summary = _page_context_summary(page["title"], page_text)
             course_name = body.course_name or (course.get("course") or {}).get("name") or ""
             module_name = _module_name_for_page(course, page_url)
 
@@ -450,30 +453,19 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
                     videos = await youtube_search.search_videos(query, limit=6) if query else []
                     slot_results.append({
                         "index": slot.index,
+                        "slot_id": slot.slot_id,
                         "suggested_search": slot.suggested_search,
                         "original_description_text": slot.original_description_text,
                         "search_query": query,
                         "already_filled": slot.already_filled,
                         "videos": videos,
                     })
-            else:
-                query = await resolve_query("")
-                videos = await youtube_search.search_videos(query, limit=6) if query else []
-                if videos:
-                    slot_results.append({
-                        "index": 0,
-                        "suggested_search": "",
-                        "original_description_text": "",
-                        "search_query": query,
-                        "already_filled": False,
-                        "videos": videos,
-                    })
-
             results.append({
                 "title": page["title"],
                 "url": page["url"],
                 "published": page["published"],
                 "before_class_context": before_class,
+                "page_summary": page_summary,
                 "slots": slot_results,
             })
     except canvas_lms.CanvasConfigError as exc:
@@ -491,10 +483,11 @@ async def refine_video_slot_search(body: VideoSlotRefineRequest) -> dict:
     try:
         course = await canvas_lms.read_course(body.course_id)
         page = await canvas_lms.read_page(body.course_id, body.page_url)
-        slots = video_slots.find_video_slots(page["body"])
-        if body.slot_index < 0 or body.slot_index >= len(slots):
+        slot = video_slots.find_video_slot(
+            page["body"], slot_id=body.slot_id, slot_index=body.slot_index
+        )
+        if slot is None:
             raise HTTPException(status_code=400, detail="That video slot no longer exists on this page.")
-        slot = slots[body.slot_index]
 
         before_class = await _before_class_context(course, body.course_id, body.page_url)
         course_name = body.course_name or (course.get("course") or {}).get("name") or ""
@@ -533,10 +526,11 @@ async def refine_video_slot_search(body: VideoSlotRefineRequest) -> dict:
 async def preview_video_slot(body: VideoSlotPreviewRequest) -> dict:
     try:
         page = await canvas_lms.read_page(body.course_id, body.page_url)
-        slots = video_slots.find_video_slots(page["body"])
-        if body.slot_index < 0 or body.slot_index >= len(slots):
+        slot = video_slots.find_video_slot(
+            page["body"], slot_id=body.slot_id, slot_index=body.slot_index
+        )
+        if slot is None:
             raise HTTPException(status_code=400, detail="That video slot no longer exists on this page.")
-        slot = slots[body.slot_index]
 
         descriptions = []
         used_description_fallback = False
@@ -561,8 +555,13 @@ async def preview_video_slot(body: VideoSlotPreviewRequest) -> dict:
             f"{description_html}\n{embed_html}"
             for description_html, embed_html in rendered
         )
+        before_preview_standalone_html = video_slots.wrap_for_preview(
+            video_slots.render_current_slot_html(slot)
+        )
         preview_standalone_html = video_slots.wrap_for_preview(rendered)
-        updated_body = video_slots.apply_slot(page["body"], body.slot_index, rendered)
+        updated_body = video_slots.apply_slot(
+            page["body"], body.slot_index, rendered, slot_id=body.slot_id
+        )
     except canvas_lms.CanvasConfigError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except canvas_lms.CanvasAPIError as exc:
@@ -575,6 +574,7 @@ async def preview_video_slot(body: VideoSlotPreviewRequest) -> dict:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {
         "preview_html": replacement_html,
+        "before_preview_standalone_html": before_preview_standalone_html,
         "preview_standalone_html": preview_standalone_html,
         "updated_body": updated_body,
         "expected_updated_at": page["updated_at"],
@@ -1027,6 +1027,31 @@ def _html_to_text(html: str) -> str:
     text = re.sub(r"\s*\n\s*", "\n", text)
     text = re.sub(r"[ \t]{2,}", " ", text)
     return text.strip()
+
+
+def _page_context_summary(page_title: str, page_text: str, limit: int = 280) -> str:
+    """Return a short, useful excerpt without video-template instructions."""
+    title_key = _match_text(page_title)
+    useful_lines = []
+    for line in (page_text or "").splitlines():
+        line = re.sub(r"\s+", " ", line).strip()
+        line_key = _match_text(line)
+        if (
+            not line
+            or line_key == title_key
+            or re.search(r"watch this\s*\(", line, re.IGNORECASE)
+            or re.search(r"embed your youtube video here", line, re.IGNORECASE)
+        ):
+            continue
+        useful_lines.append(line)
+
+    summary = " ".join(useful_lines)
+    if not summary:
+        return f"This page covers {page_title}." if page_title else "No page description is available."
+    if len(summary) <= limit:
+        return summary
+    shortened = summary[: limit + 1].rsplit(" ", 1)[0].rstrip(" ,;:")
+    return f"{shortened}..."
 
 
 def _match_text(value: str) -> str:
