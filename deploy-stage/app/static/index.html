@@ -10,7 +10,8 @@
       document.documentElement.dataset.workspace = pages[window.location.pathname] || "h5p";
     })();
   </script>
-  <link rel="stylesheet" href="/static/styles.css?v=20260731-training-gov-aqf">
+  <link rel="stylesheet" href="/static/styles.css?v=20260731-loading-icons-navigation">
+  <script src="https://unpkg.com/lucide@1.16.0/dist/umd/lucide.js" defer></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HEFSNZDXB9"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -413,11 +414,11 @@
     <div id="youtube-workspace" class="workspace-tab" hidden>
       <div class="youtube-flow-topbar">
         <nav class="steps youtube-steps" id="youtube-steps" aria-label="Progress">
-          <div class="step active" id="youtube-step-pill-1"><span>1</span>Connect</div>
+          <button type="button" class="step active" id="youtube-step-pill-1" data-youtube-step="1"><span>1</span>Connect</button>
           <div class="step-connector"></div>
-          <div class="step" id="youtube-step-pill-2"><span>2</span>Choose content</div>
+          <button type="button" class="step" id="youtube-step-pill-2" data-youtube-step="2" disabled><span>2</span>Choose content</button>
           <div class="step-connector"></div>
-          <div class="step" id="youtube-step-pill-3"><span>3</span>Review &amp; push</div>
+          <button type="button" class="step" id="youtube-step-pill-3" data-youtube-step="3" disabled><span>3</span>Review &amp; push</button>
         </nav>
       </div>
 
@@ -475,6 +476,14 @@
             <button type="button" id="youtube-canvas-course-search-button">Search</button>
           </div>
           <p id="youtube-canvas-source-status" class="status" aria-live="polite"></p>
+          <div id="youtube-content-loader" class="content-discovery-loader" hidden aria-live="polite">
+            <span class="content-loader-spinner" aria-hidden="true"></span>
+            <div class="content-loader-copy">
+              <strong id="youtube-content-loader-title">Looking through Canvas</strong>
+              <span id="youtube-content-loader-message">Finding the content you can use.</span>
+              <span class="content-loader-track" aria-hidden="true"><span></span></span>
+            </div>
+          </div>
           <div id="youtube-canvas-course-results" class="canvas-search-results"></div>
           <div id="youtube-canvas-source-picker" class="youtube-canvas-source-picker" hidden>
             <div class="youtube-selected-course">
@@ -523,10 +532,16 @@
       </section>
 
       <section id="youtube-slot-panel" class="panel youtube-slot-panel youtube-flow-slide" hidden>
-        <div>
-          <p class="eyebrow">3 &middot; Review video suggestions</p>
-          <h2 class="step-title">Choose videos for your Canvas pages</h2>
-          <p class="muted">Select one or more videos per slot, preview the Canvas HTML, then push it to the live page.</p>
+        <div class="youtube-review-header">
+          <div>
+            <p class="eyebrow">3 &middot; Review video suggestions</p>
+            <h2 class="step-title">Choose videos for your Canvas pages</h2>
+            <p class="muted">Select one or more videos per slot, preview the Canvas HTML, then push it to the live page.</p>
+          </div>
+          <button type="button" id="youtube-review-back-button" class="secondary icon-text-button">
+            <i data-lucide="arrow-left" aria-hidden="true"></i>
+            Choose different content
+          </button>
         </div>
         <div id="youtube-slot-results"></div>
       </section>
@@ -552,6 +567,14 @@
             <button type="button" id="youtube-search-button">Search</button>
           </div>
           <p id="youtube-status" class="status"></p>
+          <div id="youtube-search-loader" class="content-discovery-loader compact" hidden aria-live="polite">
+            <span class="content-loader-spinner" aria-hidden="true"></span>
+            <div class="content-loader-copy">
+              <strong>Searching YouTube</strong>
+              <span>Checking titles, channels, durations, and relevance.</span>
+              <span class="content-loader-track" aria-hidden="true"><span></span></span>
+            </div>
+          </div>
           <div id="youtube-results" class="youtube-results"></div>
         </section>
 
@@ -676,6 +699,6 @@
     </button>
   </div>
 
-<script src="/static/app.js?v=20260731-training-gov-aqf" defer></script>
+<script src="/static/app.js?v=20260731-loading-icons-navigation" defer></script>
 </body>
 </html>

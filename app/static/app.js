@@ -89,6 +89,9 @@ const youtubeCanvasTools = document.getElementById("youtube-canvas-tools");
 const youtubeCanvasCourseSearch = document.getElementById("youtube-canvas-course-search");
 const youtubeCanvasCourseSearchButton = document.getElementById("youtube-canvas-course-search-button");
 const youtubeCanvasSourceStatus = document.getElementById("youtube-canvas-source-status");
+const youtubeContentLoader = document.getElementById("youtube-content-loader");
+const youtubeContentLoaderTitle = document.getElementById("youtube-content-loader-title");
+const youtubeContentLoaderMessage = document.getElementById("youtube-content-loader-message");
 const youtubeCanvasCourseResults = document.getElementById("youtube-canvas-course-results");
 const youtubeCanvasSourcePicker = document.getElementById("youtube-canvas-source-picker");
 const youtubeCanvasCourseTitle = document.getElementById("youtube-canvas-course-title");
@@ -101,6 +104,7 @@ const youtubeAqfLevelSelect = document.getElementById("youtube-aqf-level");
 const youtubeAqfSuggestion = document.getElementById("youtube-aqf-suggestion");
 const youtubeSlotPanel = document.getElementById("youtube-slot-panel");
 const youtubeSlotResults = document.getElementById("youtube-slot-results");
+const youtubeReviewBackButton = document.getElementById("youtube-review-back-button");
 const youtubeStepPills = [1, 2, 3].map(n => document.getElementById(`youtube-step-pill-${n}`));
 const youtubeConnectSummary = document.getElementById("youtube-connect-summary");
 const youtubeConnectSummaryText = document.getElementById("youtube-connect-summary-text");
@@ -112,6 +116,7 @@ const youtubeContentChangeButton = document.getElementById("youtube-content-chan
 const youtubeContentForm = document.getElementById("youtube-content-form");
 const youtubeManualToggle = document.getElementById("youtube-manual-toggle");
 const youtubeManualPanel = document.getElementById("youtube-manual-panel");
+const youtubeSearchLoader = document.getElementById("youtube-search-loader");
 const youtubeAccountMenu = document.getElementById("youtube-account-menu");
 const youtubeAccountTrigger = document.getElementById("youtube-account-trigger");
 const youtubeAccountAvatar = document.getElementById("youtube-account-avatar");
@@ -2047,14 +2052,28 @@ let youtubeTrainingProductContext = null;
 
 initYouTubeSearch();
 
+function refreshLucideIcons() {
+  if (window.lucide?.createIcons) {
+    window.lucide.createIcons({
+      attrs: {
+        "aria-hidden": "true",
+        "stroke-width": 2,
+      },
+    });
+  }
+}
+
 function updateYoutubeStepIndicator(step) {
   youtubeStepPills.forEach((pill, i) => {
     if (!pill) return;
     const n = i + 1;
     pill.classList.toggle("active", n === step);
     pill.classList.toggle("done", n < step);
+    pill.disabled = (n === 2 && !canvasReady) || (n === 3 && !youtubeContentChosen);
+    pill.setAttribute("aria-current", n === step ? "step" : "false");
   });
   updateYouTubeFlowSlides(step);
+  refreshLucideIcons();
 }
 
 function updateYouTubeFlowSlides(step = 1) {
@@ -2107,6 +2126,20 @@ function resetYoutubeContentSummary() {
 
 function initYouTubeSearch() {
   if (!youtubeSearchButton || !youtubeSearchInput) return;
+  youtubeStepPills.forEach(pill => {
+    pill?.addEventListener("click", () => {
+      const step = Number(pill.dataset.youtubeStep);
+      if (step === 1 || (step === 2 && canvasReady) || (step === 3 && youtubeContentChosen)) {
+        updateYoutubeStepIndicator(step);
+      }
+    });
+  });
+  if (youtubeReviewBackButton) {
+    youtubeReviewBackButton.addEventListener("click", () => {
+      updateYoutubeStepIndicator(2);
+      youtubeCanvasTools?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
   youtubeSearchButton.addEventListener("click", runYouTubeSearch);
   youtubeSearchInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -2304,6 +2337,7 @@ function initYouTubeSearch() {
   updateYoutubeStepIndicator(canvasReady ? (youtubeContentChosen ? 3 : 2) : 1);
   refreshYouTubeStatus();
   updateYouTubeSelection();
+  refreshLucideIcons();
 }
 
 async function refreshYouTubeStatus() {
@@ -2346,6 +2380,11 @@ async function runYouTubeCanvasCourseSearch() {
   }
 
   youtubeCanvasCourseSearchButton.disabled = true;
+  setYouTubeContentLoading(
+    true,
+    "Searching Canvas",
+    "Looking for matching courses you can access."
+  );
   setYouTubeCanvasSourceStatus("Searching Canvas courses...");
   youtubeCanvasCourseResults.innerHTML = "";
   youtubeCanvasSourcePicker.hidden = true;
@@ -2359,6 +2398,7 @@ async function runYouTubeCanvasCourseSearch() {
     setYouTubeCanvasSourceStatus(err.message, true);
   } finally {
     youtubeCanvasCourseSearchButton.disabled = false;
+    setYouTubeContentLoading(false);
   }
 }
 
@@ -2375,6 +2415,11 @@ function renderYouTubeCanvasCourseResults(courses) {
 }
 
 async function loadYouTubeCanvasCourse(courseId) {
+  setYouTubeContentLoading(
+    true,
+    "Loading Canvas content",
+    "Reading the course modules and pages."
+  );
   setYouTubeCanvasSourceStatus(`Reading Canvas course ${courseId}...`);
   youtubeCanvasSourcePicker.hidden = true;
   setYouTubeAqfSuggestion("");
@@ -2388,6 +2433,8 @@ async function loadYouTubeCanvasCourse(courseId) {
     setYouTubeCanvasSourceStatus("");
   } catch (err) {
     setYouTubeCanvasSourceStatus(err.message, true);
+  } finally {
+    setYouTubeContentLoading(false);
   }
 }
 
@@ -2550,6 +2597,11 @@ async function suggestVideoSlotsFromCanvasContent() {
   }
 
   youtubeCanvasSuggestButton.disabled = true;
+  setYouTubeContentLoading(
+    true,
+    "Finding videos for your content",
+    "Reading Canvas pages, checking the unit and searching YouTube."
+  );
   setYouTubeCanvasSourceStatus("Confirming the unit and AQF level...");
   try {
     await youtubeAqfSuggestionPromise;
@@ -2588,6 +2640,7 @@ async function suggestVideoSlotsFromCanvasContent() {
   } catch (err) {
     setYouTubeCanvasSourceStatus(err.message, true);
   } finally {
+    setYouTubeContentLoading(false);
     updateYouTubeCanvasSuggestButton();
   }
 }
@@ -2656,8 +2709,8 @@ function renderVideoSlotCarouselItems(videos, selectedIds = new Set()) {
         ${video.suggestion_origin ? `<span class="video-slot-origin">Suggested for ${escapeHtml(video.suggestion_origin)}</span>` : ""}
       </span>
       <span class="video-slot-carousel-icons">
-        <a href="${escapeHtml(video.url || "")}" target="_blank" rel="noopener" class="yt-icon-action" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
-        <button type="button" class="yt-icon-action youtube-embed-copy" data-copy-youtube-embed="${escapeHtml(video.id || "")}" data-video-title="${escapeHtml(video.title || "YouTube video")}" title="Copy embed code" aria-label="Copy embed code">&lt;/&gt;</button>
+        <a href="${escapeHtml(video.url || "")}" target="_blank" rel="noopener" class="yt-icon-action" title="Open on YouTube" aria-label="Open on YouTube"><i data-lucide="external-link"></i></a>
+        <button type="button" class="yt-icon-action youtube-embed-copy" data-copy-youtube-embed="${escapeHtml(video.id || "")}" data-video-title="${escapeHtml(video.title || "YouTube video")}" title="Copy embed code" aria-label="Copy embed code"><i data-lucide="code-xml"></i></button>
       </span>
     </label>
   `).join("") || `<p class="muted">No candidate videos were found for this slot.</p>`;
@@ -2675,7 +2728,10 @@ function renderVideoSuggestionsForCard(card, state) {
   const videos = sharedVideosForSlot(state);
   state.videosById = new Map(videos.map(video => [video.id, video]));
   const carousel = card.querySelector("[data-slot-carousel]");
-  if (carousel) carousel.innerHTML = renderVideoSlotCarouselItems(videos, state.selected);
+  if (carousel) {
+    carousel.innerHTML = renderVideoSlotCarouselItems(videos, state.selected);
+    refreshLucideIcons();
+  }
   const toggle = card.querySelector("[data-slot-shared-toggle]");
   if (toggle) {
     const count = sharedSuggestionCount(state);
@@ -2746,11 +2802,11 @@ function renderVideoSlots(courseId, pages) {
             ${description ? `<p class="video-slot-original">${escapeHtml(description)}</p>` : ""}
 
             <div class="video-slot-carousel-wrap">
-              <button type="button" class="video-slot-arrow video-slot-arrow-prev" data-slot-scroll="-1" aria-label="Scroll left">&lsaquo;</button>
+              <button type="button" class="video-slot-arrow video-slot-arrow-prev" data-slot-scroll="-1" aria-label="Scroll left" title="Previous videos"><i data-lucide="chevron-left"></i></button>
               <div class="video-slot-carousel" data-slot-carousel>
                 ${renderVideoSlotCarouselItems(carouselVideos)}
               </div>
-              <button type="button" class="video-slot-arrow video-slot-arrow-next" data-slot-scroll="1" aria-label="Scroll right">&rsaquo;</button>
+              <button type="button" class="video-slot-arrow video-slot-arrow-next" data-slot-scroll="1" aria-label="Scroll right" title="Next videos"><i data-lucide="chevron-right"></i></button>
             </div>
             <button type="button" class="video-slot-shared-toggle" data-slot-shared-toggle aria-expanded="false"${sharedSuggestionCount(state) ? "" : " disabled"}>
               ${sharedSuggestionCount(state)
@@ -2801,6 +2857,7 @@ function renderVideoSlots(courseId, pages) {
   });
   youtubeSlotResults.innerHTML = cards.join("") || `<p class="muted">No readable Canvas pages were returned for this selection.</p>`;
   syncSharedVideoSuggestions();
+  refreshLucideIcons();
   if (youtubeSlotPanel) youtubeSlotPanel.hidden = false;
 }
 
@@ -3089,6 +3146,13 @@ function setYouTubeCanvasSourceStatus(message, isError = false) {
   youtubeCanvasSourceStatus.style.color = isError ? "#b42318" : "";
 }
 
+function setYouTubeContentLoading(loading, title = "", message = "") {
+  if (!youtubeContentLoader) return;
+  youtubeContentLoader.hidden = !loading;
+  if (title && youtubeContentLoaderTitle) youtubeContentLoaderTitle.textContent = title;
+  if (message && youtubeContentLoaderMessage) youtubeContentLoaderMessage.textContent = message;
+}
+
 async function runYouTubeSearch(queryOverride) {
   if (!youtubeReady) return;
   const query = (queryOverride ?? youtubeSearchInput.value).trim();
@@ -3099,6 +3163,7 @@ async function runYouTubeSearch(queryOverride) {
   if (queryOverride !== undefined) youtubeSearchInput.value = query;
 
   youtubeSearchButton.disabled = true;
+  if (youtubeSearchLoader) youtubeSearchLoader.hidden = false;
   setYouTubeStatus("Searching YouTube...");
   youtubeResults.innerHTML = "";
   try {
@@ -3114,6 +3179,7 @@ async function runYouTubeSearch(queryOverride) {
   } catch (err) {
     setYouTubeStatus(err.message, true);
   } finally {
+    if (youtubeSearchLoader) youtubeSearchLoader.hidden = true;
     youtubeSearchButton.disabled = !youtubeReady;
   }
 }
@@ -3132,6 +3198,7 @@ function renderYouTubeResults(videos) {
       </span>
     </label>
   `).join("");
+  refreshLucideIcons();
 }
 
 function updateYouTubeSelection() {
@@ -3284,7 +3351,7 @@ function renderYouTubeVideoActions(video, trackOpen = false) {
         : ""}
       <a href="${escapeHtml(video.url)}" target="_blank" rel="noopener" ${trackOpen ? `data-video-link="${escapeHtml(videoId)}"` : ""}>Open video</a>
       ${videoId
-        ? `<button type="button" class="youtube-embed-copy" data-copy-youtube-embed="${escapeHtml(videoId)}" data-video-title="${escapeHtml(title)}" title="Copy embed code" aria-label="Copy embed code">&lt;/&gt;</button>`
+        ? `<button type="button" class="youtube-embed-copy" data-copy-youtube-embed="${escapeHtml(videoId)}" data-video-title="${escapeHtml(title)}" title="Copy embed code" aria-label="Copy embed code"><i data-lucide="code-xml"></i></button>`
         : ""}
     </span>
   `;

@@ -109,7 +109,9 @@ html[data-workspace="youtube"] #youtube-workspace {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: auto;
   padding: 8px 14px;
+  border: 0;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -117,6 +119,22 @@ html[data-workspace="youtube"] #youtube-workspace {
   background: rgba(0, 0, 0, 0.06);
   transition: background 200ms ease, color 200ms ease;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.step:hover {
+  color: var(--primary-strong);
+  background: rgba(0, 0, 84, 0.10);
+  transform: none;
+}
+
+.step:disabled {
+  cursor: default;
+}
+
+.step:disabled:hover {
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .step span {
@@ -169,6 +187,106 @@ html[data-workspace="youtube"] #youtube-workspace {
 
 .youtube-steps {
   margin-bottom: 0;
+}
+
+.content-discovery-loader {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  margin: 12px 0 18px;
+  padding: 14px 16px;
+  border-block: 1px solid var(--border);
+  background: rgba(0, 0, 84, 0.035);
+}
+
+.content-discovery-loader[hidden] {
+  display: none;
+}
+
+.content-discovery-loader.compact {
+  margin-top: 8px;
+}
+
+.content-loader-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(0, 0, 84, 0.14);
+  border-top-color: var(--rmit-red);
+  border-radius: 50%;
+  animation: content-loader-spin 800ms linear infinite;
+}
+
+.content-loader-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.content-loader-copy strong {
+  color: var(--rmit-navy);
+  font-size: 0.9rem;
+}
+
+.content-loader-copy > span:not(.content-loader-track) {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.content-loader-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin-top: 7px;
+  overflow: hidden;
+  background: rgba(0, 0, 84, 0.10);
+}
+
+.content-loader-track span {
+  position: absolute;
+  inset-block: 0;
+  width: 38%;
+  background: var(--rmit-red);
+  animation: content-loader-progress 1.25s ease-in-out infinite;
+}
+
+@keyframes content-loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes content-loader-progress {
+  from { left: -38%; }
+  to { left: 100%; }
+}
+
+.youtube-review-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.youtube-review-header > div {
+  min-width: 0;
+}
+
+.icon-text-button {
+  width: auto;
+  min-width: max-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.icon-text-button svg,
+.yt-icon-action svg,
+.youtube-embed-copy svg,
+.video-slot-arrow svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
 }
 
 .youtube-account-menu {
@@ -1943,7 +2061,6 @@ button:disabled {
   border: 1px solid var(--border);
   background: #fff;
   color: var(--rmit-navy);
-  font-size: 0.8rem;
   text-decoration: none;
   cursor: pointer;
 }
@@ -2238,7 +2355,6 @@ button:disabled {
   background: rgba(0, 0, 84, 0.08);
   color: var(--rmit-navy);
   border: 1px solid rgba(0, 0, 84, 0.18);
-  font-size: 0.76rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -2422,6 +2538,35 @@ button:disabled {
 /* ── Responsive ─────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
+  .youtube-steps .step {
+    flex-shrink: 1;
+    gap: 5px;
+    min-width: 0;
+    padding: 7px 8px;
+    font-size: 0.75rem;
+  }
+
+  .youtube-steps .step span {
+    width: 18px;
+    height: 18px;
+    font-size: 0.68rem;
+  }
+
+  .youtube-steps .step-connector {
+    min-width: 5px;
+    margin-inline: 2px;
+  }
+
+  .youtube-review-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .youtube-review-header .icon-text-button {
+    width: 100%;
+    min-width: 0;
+  }
+
   .control-row {
     grid-template-columns: 1fr;
   }
@@ -2582,6 +2727,13 @@ button:disabled {
     padding: 16px 20px;
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content-loader-spinner,
+  .content-loader-track span {
+    animation-duration: 2.4s;
   }
 }
 
