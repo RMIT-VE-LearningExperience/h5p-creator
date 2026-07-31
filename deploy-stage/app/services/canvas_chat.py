@@ -117,7 +117,7 @@ def suggest_aqf_level(course_context: dict[str, Any]) -> dict[str, Any]:
 
     model_name = settings.val_model
     client = OpenAI(api_key=settings.val_api_key, base_url=settings.val_base_url)
-    user_content = json.dumps(_compact_aqf_context(course_context), ensure_ascii=False, indent=2)
+    user_content = json.dumps(compact_aqf_context(course_context), ensure_ascii=False, indent=2)
 
     try:
         response = client.chat.completions.create(
@@ -156,7 +156,7 @@ def suggest_aqf_level(course_context: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _compact_aqf_context(course_context: dict[str, Any]) -> dict[str, Any]:
+def compact_aqf_context(course_context: dict[str, Any]) -> dict[str, Any]:
     course = course_context.get("course") or {}
     return {
         "course": {
@@ -175,7 +175,7 @@ def _compact_aqf_context(course_context: dict[str, Any]) -> dict[str, Any]:
 
 
 def _heuristic_aqf_level(course_context: dict[str, Any]) -> dict[str, Any] | None:
-    compact = _compact_aqf_context(course_context)
+    compact = compact_aqf_context(course_context)
     text = " ".join([
         compact["course"]["name"],
         compact["course"]["course_code"],

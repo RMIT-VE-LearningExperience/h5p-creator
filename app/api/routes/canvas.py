@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from app.core.config import settings
 from app.schemas.requests import BatchGenerateResponse, BatchResultItem
-from app.services import ai_processor, canvas_chat, canvas_files, canvas_lms, document_parser, h5p_packager, video_slots, youtube_search
+from app.services import ai_processor, canvas_chat, canvas_files, canvas_lms, document_parser, h5p_packager, training_gov, video_slots, youtube_search
 
 async def _bind_canvas_credentials(
     canvas_base_url: str | None = Header(default=None, alias="X-Canvas-Base-URL"),
@@ -95,6 +95,8 @@ class VideoSlotSuggestionRequest(BaseModel):
     course_name: str = ""
     page_urls: list[str] = Field(..., min_length=1)
     aqf_level: int | None = Field(default=None, ge=1, le=10)
+    training_product_code: str = Field(default="", max_length=20)
+    training_product_title: str = Field(default="", max_length=300)
 
 
 class AQFLevelSuggestionRequest(BaseModel):
@@ -132,6 +134,8 @@ class VideoSlotRefineRequest(BaseModel):
     slot_id: str = Field(default="", max_length=100)
     additional_context: str = Field(default="", max_length=1000)
     aqf_level: int | None = Field(default=None, ge=1, le=10)
+    training_product_code: str = Field(default="", max_length=20)
+    training_product_title: str = Field(default="", max_length=300)
 
 
 @router.get("/status")
@@ -370,13 +374,51 @@ def _search_query_for_aqf(query: str, aqf_level: int | None) -> str:
     return f"{query} {modifier}"
 
 
+def _training_product_search_context(code: str, title: str) -> str:
+    return " ".join(part.strip() for part in (code, title) if part and part.strip())
+
+
+async def _training_gov_aqf_suggestion(course: dict) -> dict | None:
+    compact = canvas_chat.compact_aqf_context(course)
+    values = [
+        compact["course"]["course_code"],
+        compact["course"]["name"],
+        *[item["name"] for item in compact["modules"]],
+        *[item["title"] for item in compact["pages"]],
+    ]
+    codes = training_gov.extract_training_product_codes(*values, limit=4)
+    if not codes:
+        return None
+
+    async def lookup(code: str):
+        try:
+            return await asyncio.wait_for(
+                training_gov.lookup_training_product(code),
+                timeout=18,
+            )
+        except (TimeoutError, ValueError, RuntimeError):
+            return None
+
+    products = await asyncio.gather(*(lookup(code) for code in codes))
+    for product in products:
+        if not product:
+            continue
+        suggestion = training_gov.aqf_suggestion(product)
+        if suggestion:
+            suggestion["aqf_label"] = canvas_chat.aqf_label(suggestion["aqf_level"])
+            return suggestion
+    return None
+
+
 @router.post("/courses/aqf-suggestion")
 async def suggest_course_aqf_level(body: AQFLevelSuggestionRequest) -> dict:
     try:
         course = await canvas_lms.read_course(body.course_id)
         if body.course_name and course.get("course"):
             course["course"]["name"] = body.course_name
-        suggestion = await asyncio.to_thread(lambda: canvas_chat.suggest_aqf_level(course))
+        suggestion = await _training_gov_aqf_suggestion(course)
+        if not suggestion:
+            suggestion = await asyncio.to_thread(lambda: canvas_chat.suggest_aqf_level(course))
     except canvas_lms.CanvasConfigError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except canvas_lms.CanvasAPIError as exc:
@@ -403,6 +445,13 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
             page_text = _html_to_text(page["body"])
             page_summary = _page_context_summary(page["title"], page_text)
             course_name = body.course_name or (course.get("course") or {}).get("name") or ""
+            training_context = _training_product_search_context(
+                body.training_product_code,
+                body.training_product_title,
+            )
+            search_course_name = " · ".join(
+                part for part in (course_name, training_context) if part
+            )
             module_name = _module_name_for_page(course, page_url)
 
             selected_page_bodies = [{
@@ -421,7 +470,7 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
                     "embedded_youtube_links": [],
                 })
             page_context = {
-                "course": {"id": body.course_id, "name": body.course_name},
+                "course": {"id": body.course_id, "name": search_course_name},
                 "selected_page_bodies": selected_page_bodies,
             }
 
@@ -433,7 +482,7 @@ async def suggest_video_slots(body: VideoSlotSuggestionRequest) -> dict:
                         lambda: canvas_chat.generate_search_query(
                             page_title=page["title"],
                             page_text=page_text,
-                            course_name=course_name,
+                            course_name=search_course_name,
                             module_name=module_name,
                             before_class_text=before_class["text"] if before_class else "",
                             aqf_level=body.aqf_level,
@@ -502,6 +551,13 @@ async def refine_video_slot_search(body: VideoSlotRefineRequest) -> dict:
 
         before_class = await _before_class_context(course, body.course_id, body.page_url)
         course_name = body.course_name or (course.get("course") or {}).get("name") or ""
+        training_context = _training_product_search_context(
+            body.training_product_code,
+            body.training_product_title,
+        )
+        search_course_name = " · ".join(
+            part for part in (course_name, training_context) if part
+        )
         module_name = _module_name_for_page(course, body.page_url)
         page_text = _html_to_text(page["body"])
 
@@ -509,7 +565,7 @@ async def refine_video_slot_search(body: VideoSlotRefineRequest) -> dict:
             lambda: canvas_chat.generate_search_query(
                 page_title=page["title"],
                 page_text=page_text,
-                course_name=course_name,
+                course_name=search_course_name,
                 module_name=module_name,
                 before_class_text=before_class["text"] if before_class else "",
                 additional_context=body.additional_context,

@@ -2042,6 +2042,8 @@ const videoSlotState = new Map();
 const sharedVideoSuggestionPool = new Map();
 let youtubeContentChosen = false;
 let youtubeAqfSuggestionRequestId = 0;
+let youtubeAqfSuggestionPromise = Promise.resolve(null);
+let youtubeTrainingProductContext = null;
 
 initYouTubeSearch();
 
@@ -2382,7 +2384,7 @@ async function loadYouTubeCanvasCourse(courseId) {
     if (!response.ok) throw new Error(extractErrorMessage(payload, "Could not read Canvas course"));
     youtubeCanvasCourseContext = payload;
     renderYouTubeCanvasSources(payload);
-    suggestYouTubeAqfLevel(payload);
+    youtubeAqfSuggestionPromise = suggestYouTubeAqfLevel(payload);
     setYouTubeCanvasSourceStatus("");
   } catch (err) {
     setYouTubeCanvasSourceStatus(err.message, true);
@@ -2478,19 +2480,23 @@ function setYouTubeAqfSuggestion(text) {
   if (youtubeAqfSuggestion) youtubeAqfSuggestion.textContent = text;
 }
 
-function setYouTubeAqfSuggestionRich(label, reason) {
+function setYouTubeAqfSuggestionRich(label, reason, trainingProduct = null) {
   if (!youtubeAqfSuggestion) return;
   const reasonHtml = reason
     ? `<span class="youtube-aqf-reason" title="${escapeHtml(reason)}">${escapeHtml(reason)}</span>`
     : "";
+  const sourceHtml = trainingProduct?.source_url
+    ? `<a class="youtube-aqf-source" href="${escapeHtml(trainingProduct.source_url)}" target="_blank" rel="noopener">View ${escapeHtml(trainingProduct.code || "training product")} on training.gov.au</a>`
+    : "";
   youtubeAqfSuggestion.innerHTML =
-    `<strong>Suggested: ${escapeHtml(label)}</strong>${reasonHtml}`;
+    `<strong>Suggested: ${escapeHtml(label)}</strong>${reasonHtml}${sourceHtml}`;
 }
 
 async function suggestYouTubeAqfLevel(payload) {
-  if (!youtubeAqfLevelSelect || !payload?.course?.id) return;
+  if (!youtubeAqfLevelSelect || !payload?.course?.id) return null;
   const requestId = ++youtubeAqfSuggestionRequestId;
-  setYouTubeAqfSuggestion("Suggesting AQF level...");
+  youtubeTrainingProductContext = null;
+  setYouTubeAqfSuggestion("Checking training.gov.au for a unit or qualification...");
   try {
     const response = await canvasFetch("/canvas/courses/aqf-suggestion", {
       method: "POST",
@@ -2507,11 +2513,14 @@ async function suggestYouTubeAqfLevel(payload) {
     if (Number.isFinite(level) && level >= 1 && level <= 10 && !currentAqfLevel()) {
       youtubeAqfLevelSelect.value = String(level);
     }
+    youtubeTrainingProductContext = suggestion.training_product || null;
     const label = suggestion.aqf_label || youtubeAqfLevelSelect.selectedOptions[0]?.textContent || "AQF level";
-    setYouTubeAqfSuggestionRich(label, suggestion.reason || "");
+    setYouTubeAqfSuggestionRich(label, suggestion.reason || "", youtubeTrainingProductContext);
+    return suggestion;
   } catch (err) {
-    if (requestId !== youtubeAqfSuggestionRequestId) return;
+    if (requestId !== youtubeAqfSuggestionRequestId) return null;
     setYouTubeAqfSuggestion("Choose an AQF level to tune the video search, or leave it unspecified.");
+    return null;
   }
 }
 
@@ -2541,8 +2550,10 @@ async function suggestVideoSlotsFromCanvasContent() {
   }
 
   youtubeCanvasSuggestButton.disabled = true;
-  setYouTubeCanvasSourceStatus("Reading Canvas content and finding relevant videos...");
+  setYouTubeCanvasSourceStatus("Confirming the unit and AQF level...");
   try {
+    await youtubeAqfSuggestionPromise;
+    setYouTubeCanvasSourceStatus("Reading Canvas content and finding relevant videos...");
     const response = await canvasFetch("/canvas/pages/video-slots", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2551,6 +2562,8 @@ async function suggestVideoSlotsFromCanvasContent() {
         course_name: course.name || "",
         page_urls: resolvedPageUrls,
         aqf_level: currentAqfLevel(),
+        training_product_code: youtubeTrainingProductContext?.code || "",
+        training_product_title: youtubeTrainingProductContext?.title || "",
       }),
     });
     const payload = await readResponsePayload(response);
@@ -2622,6 +2635,15 @@ function sharedSuggestionCount(state) {
   return [...sharedVideoSuggestionPool.keys()].filter(videoId => !ownIds.has(videoId)).length;
 }
 
+function sharedSuggestionUnavailableText(state) {
+  const selectedPageCount = new Set(
+    [...videoSlotState.values(), state].map(item => item.pageUrl)
+  ).size;
+  return selectedPageCount < 2
+    ? "Select more than one page to reuse its video suggestions"
+    : "No different suggestions are available from the other selected pages";
+}
+
 function renderVideoSlotCarouselItems(videos, selectedIds = new Set()) {
   return videos.map(video => `
     <label class="video-slot-carousel-item">
@@ -2657,9 +2679,12 @@ function renderVideoSuggestionsForCard(card, state) {
   const toggle = card.querySelector("[data-slot-shared-toggle]");
   if (toggle) {
     const count = sharedSuggestionCount(state);
-    toggle.hidden = count === 0;
+    toggle.hidden = false;
+    toggle.disabled = count === 0;
     toggle.setAttribute("aria-expanded", String(state.showShared));
-    toggle.textContent = state.showShared
+    toggle.textContent = count === 0
+      ? sharedSuggestionUnavailableText(state)
+      : state.showShared
       ? "Show only suggestions for this page"
       : `Browse suggestions from other pages (${count})`;
   }
@@ -2727,8 +2752,10 @@ function renderVideoSlots(courseId, pages) {
               </div>
               <button type="button" class="video-slot-arrow video-slot-arrow-next" data-slot-scroll="1" aria-label="Scroll right">&rsaquo;</button>
             </div>
-            <button type="button" class="video-slot-shared-toggle" data-slot-shared-toggle aria-expanded="false"${sharedSuggestionCount(state) ? "" : " hidden"}>
-              Browse suggestions from other pages (${sharedSuggestionCount(state)})
+            <button type="button" class="video-slot-shared-toggle" data-slot-shared-toggle aria-expanded="false"${sharedSuggestionCount(state) ? "" : " disabled"}>
+              ${sharedSuggestionCount(state)
+                ? `Browse suggestions from other pages (${sharedSuggestionCount(state)})`
+                : sharedSuggestionUnavailableText(state)}
             </button>
 
             <div class="video-slot-refine">
@@ -2773,6 +2800,7 @@ function renderVideoSlots(courseId, pages) {
     });
   });
   youtubeSlotResults.innerHTML = cards.join("") || `<p class="muted">No readable Canvas pages were returned for this selection.</p>`;
+  syncSharedVideoSuggestions();
   if (youtubeSlotPanel) youtubeSlotPanel.hidden = false;
 }
 
@@ -3008,6 +3036,8 @@ async function refineVideoSlotSearch(card) {
         slot_id: state.slotId,
         additional_context: additionalContext,
         aqf_level: currentAqfLevel(),
+        training_product_code: youtubeTrainingProductContext?.code || "",
+        training_product_title: youtubeTrainingProductContext?.title || "",
       }),
     });
     const payload = await readResponsePayload(response);
@@ -3034,6 +3064,8 @@ async function refineVideoSlotSearch(card) {
 
 function resetYouTubeCanvasSource() {
   youtubeCanvasCourseContext = null;
+  youtubeTrainingProductContext = null;
+  youtubeAqfSuggestionPromise = Promise.resolve(null);
   if (youtubeCanvasCourseResults) youtubeCanvasCourseResults.innerHTML = "";
   if (youtubeCanvasSourcePicker) youtubeCanvasSourcePicker.hidden = true;
   if (youtubeCanvasModuleList) youtubeCanvasModuleList.innerHTML = "";

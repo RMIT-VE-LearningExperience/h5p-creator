@@ -1519,6 +1519,16 @@ button:disabled {
   background: rgba(0, 0, 84, 0.04);
 }
 
+.video-slot-shared-toggle:disabled {
+  color: var(--muted);
+  cursor: default;
+  text-decoration: none;
+}
+
+.video-slot-shared-toggle:disabled:hover {
+  background: none;
+}
+
 .canvas-source-option {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1586,6 +1596,12 @@ button:disabled {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.youtube-aqf-source {
+  justify-self: start;
+  color: var(--rmit-navy);
+  font-weight: 700;
 }
 
 .yt-summary-row {

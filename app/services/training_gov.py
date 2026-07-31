@@ -10,6 +10,10 @@ import httpx
 
 _BASE_URL = "https://training.gov.au"
 _CODE_RE = re.compile(r"^[A-Z0-9]{5,14}$")
+_CODE_IN_TEXT_RE = re.compile(
+    r"\b(?=[A-Z0-9]{5,14}\b)(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z]{2,}[A-Z0-9]*\b",
+    re.IGNORECASE,
+)
 _UNIT_ROW_RE = re.compile(
     r"Code\s*([A-Z0-9]{5,14})\s*\|\s*Title\s*([^|]+?)(?:\s*\|\s*Usage recommendation\s*([^|]+?))?(?:\s*\|\s*Release\s*([^|]+?))?(?:\s*\|\s*Essential\s*([^|\n]+?))?(?=\s*(?:Code[A-Z0-9]{5,14}\s*\||##|\n|$))",
     re.IGNORECASE | re.DOTALL,
@@ -141,6 +145,99 @@ def format_for_prompt(product: TrainingProduct) -> str:
             essential = f" [{unit['essential']}]" if unit.get("essential") else ""
             lines.append(f"- {unit['code']}: {unit['title']}{essential}")
     return "\n".join(lines).strip()
+
+
+def extract_training_product_codes(*values: str, limit: int = 6) -> list[str]:
+    """Return likely National Register codes in source order."""
+    codes: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        for match in _CODE_IN_TEXT_RE.finditer(value or ""):
+            code = match.group(0).upper()
+            if code in seen:
+                continue
+            seen.add(code)
+            codes.append(code)
+            if len(codes) >= limit:
+                return codes
+    return codes
+
+
+def aqf_suggestion(product: TrainingProduct) -> dict | None:
+    """Derive an AQF level or AQF indicator from a verified training product."""
+    searchable = " ".join(
+        part for part in (product.title, product.summary, product.raw_text) if part
+    )
+    title_patterns = [
+        (10, r"\b(?:doctorate|doctoral|phd|ph\.d)\b"),
+        (9, r"\b(?:master|masters|master's)\b"),
+        (8, r"\b(?:honours|honors|graduate certificate|graduate diploma)\b"),
+        (7, r"\bbachelor\b"),
+        (6, r"\b(?:advanced diploma|associate degree)\b"),
+        (5, r"\bdiploma\b"),
+        (4, r"\b(?:certificate iv|cert iv|certificate 4|cert 4)\b"),
+        (3, r"\b(?:certificate iii|cert iii|certificate 3|cert 3)\b"),
+        (2, r"\b(?:certificate ii|cert ii|certificate 2|cert 2)\b"),
+        (1, r"\b(?:certificate i|cert i|certificate 1|cert 1)\b"),
+    ]
+    if product.product_type != "unit of competency":
+        for level, pattern in title_patterns:
+            if re.search(pattern, product.title, flags=re.IGNORECASE):
+                return _aqf_result(
+                    product,
+                    level,
+                    f"training.gov.au identifies {product.code} as {product.title}.",
+                    "qualification",
+                )
+
+    explicit_level = re.search(
+        r"\bAQF(?:\s+indicator)?\s+level\s+(10|[1-9])\b",
+        searchable,
+        flags=re.IGNORECASE,
+    )
+    if explicit_level:
+        level = int(explicit_level.group(1))
+        return _aqf_result(
+            product,
+            level,
+            f"training.gov.au states AQF level {level} for {product.code} {product.title}.",
+            "explicit",
+        )
+
+    if product.product_type == "unit of competency":
+        indicator = re.search(r"\d", product.code)
+        if indicator and 1 <= int(indicator.group(0)) <= 9:
+            level = int(indicator.group(0))
+            return _aqf_result(
+                product,
+                level,
+                (
+                    f"training.gov.au confirms {product.code} {product.title}. Units do not "
+                    f"have a formal AQF level, so AQF {level} is assigned from the unit "
+                    "code's first numeric AQF indicator."
+                ),
+                "unit_code_indicator",
+            )
+    return None
+
+
+def _aqf_result(
+    product: TrainingProduct,
+    level: int,
+    reason: str,
+    method: str,
+) -> dict:
+    return {
+        "aqf_level": level,
+        "reason": reason,
+        "method": method,
+        "training_product": {
+            "code": product.code,
+            "title": product.title,
+            "product_type": product.product_type,
+            "source_url": product.source_url,
+        },
+    }
 
 
 def _normalise_code(code: str) -> str:
