@@ -1206,6 +1206,7 @@ const canvasSelectedPages = new Set();
 let canvasCurrentCourseId = null;
 let canvasCurrentCourseName = "";
 let canvasSessionCredentials = null;
+const CANVAS_CREDENTIALS_STORAGE_KEY = "rmit-video-finder.canvas-credentials.v1";
 
 const canvasConnectionViews = [
   {
@@ -1255,7 +1256,62 @@ function initCanvasConnections() {
   });
 
   const activeView = canvasConnectionViews.find(view => view.workspace === initialPage.workspace);
-  if (activeView) refreshCanvasStatus(activeView);
+  const savedCredentials = loadStoredCanvasCredentials();
+  if (savedCredentials) {
+    canvasSessionCredentials = savedCredentials;
+    canvasConnectionViews.forEach(view => {
+      if (view.baseUrl) view.baseUrl.value = savedCredentials.baseUrl;
+      if (view.apiToken) view.apiToken.value = "";
+    });
+    if (activeView) {
+      setCanvasConnectionStatus(activeView, "Restoring your Canvas connection...");
+      refreshCanvasStatus(activeView, true);
+    }
+  } else if (activeView) {
+    refreshCanvasStatus(activeView);
+  }
+}
+
+function loadStoredCanvasCredentials() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CANVAS_CREDENTIALS_STORAGE_KEY) || "null");
+    if (
+      typeof parsed?.baseUrl === "string"
+      && parsed.baseUrl.startsWith("https://")
+      && typeof parsed?.apiToken === "string"
+      && parsed.apiToken
+    ) {
+      return {
+        baseUrl: parsed.baseUrl.replace(/\/$/, ""),
+        apiToken: parsed.apiToken,
+      };
+    }
+  } catch {
+    // Browser storage may be disabled; connecting still works for this page load.
+  }
+  return null;
+}
+
+function storeCanvasCredentials(credentials) {
+  try {
+    localStorage.setItem(
+      CANVAS_CREDENTIALS_STORAGE_KEY,
+      JSON.stringify({
+        baseUrl: credentials.baseUrl,
+        apiToken: credentials.apiToken,
+      })
+    );
+  } catch {
+    // Keep the active in-memory connection when browser storage is unavailable.
+  }
+}
+
+function clearStoredCanvasCredentials() {
+  try {
+    localStorage.removeItem(CANVAS_CREDENTIALS_STORAGE_KEY);
+  } catch {
+    // Browser storage may be disabled.
+  }
 }
 
 function canvasCredentialHeaders(credentials = canvasSessionCredentials) {
@@ -1295,6 +1351,7 @@ async function connectCanvas(view) {
       throw new Error(extractErrorMessage(payload, "Could not connect to Canvas"));
     }
     canvasSessionCredentials = credentials;
+    storeCanvasCredentials(credentials);
     canvasConnectionViews.forEach(item => {
       if (item.baseUrl) item.baseUrl.value = credentials.baseUrl;
       if (item.apiToken) item.apiToken.value = "";
@@ -1303,6 +1360,7 @@ async function connectCanvas(view) {
     gtag("event", "canvas_user_connected", { canvas_host: new URL(credentials.baseUrl).hostname });
   } catch (err) {
     canvasSessionCredentials = null;
+    clearStoredCanvasCredentials();
     setCanvasConnectionStatus(view, err.message, true);
     setCanvasDisconnected();
   } finally {
@@ -1312,6 +1370,7 @@ async function connectCanvas(view) {
 
 function disconnectCanvas() {
   canvasSessionCredentials = null;
+  clearStoredCanvasCredentials();
   canvasReady = false;
   canvasCourseContext.clear();
   canvasSelectedFiles.clear();
@@ -1320,7 +1379,7 @@ function disconnectCanvas() {
   canvasCurrentCourseName = "";
   canvasConnectionViews.forEach(view => {
     if (view.apiToken) view.apiToken.value = "";
-    if (view.status) view.status.textContent = "Disconnected. The session token has been cleared.";
+    if (view.status) view.status.textContent = "Disconnected. The saved browser token has been cleared.";
   });
   setCanvasDisconnected();
   resetYouTubeCanvasSource();
@@ -1424,20 +1483,36 @@ function initCanvasReader() {
   updateCanvasPageActions();
 }
 
-async function refreshCanvasStatus(view) {
+async function refreshCanvasStatus(view, restoringSavedCredentials = false) {
   try {
     const response = await canvasFetch("/canvas/status");
     const payload = await readResponsePayload(response);
     if (response.ok && payload.connected) {
       setCanvasConnected(payload);
     } else {
+      if (restoringSavedCredentials) {
+        canvasSessionCredentials = null;
+        clearStoredCanvasCredentials();
+      }
       setCanvasDisconnected();
-      setCanvasConnectionStatus(view, "Enter your Canvas details to begin.");
+      setCanvasConnectionStatus(
+        view,
+        restoringSavedCredentials
+          ? "Your saved Canvas token is no longer valid. Connect again."
+          : "Enter your Canvas details to begin.",
+        restoringSavedCredentials
+      );
     }
   } catch (err) {
     canvasReady = false;
     setCanvasDisconnected();
-    setCanvasConnectionStatus(view, "Canvas connection could not be checked.", true);
+    setCanvasConnectionStatus(
+      view,
+      restoringSavedCredentials
+        ? "The saved Canvas connection could not be checked. Refresh to try again."
+        : "Canvas connection could not be checked.",
+      true
+    );
   }
 }
 

@@ -10,7 +10,7 @@
       document.documentElement.dataset.workspace = pages[window.location.pathname] || "h5p";
     })();
   </script>
-  <link rel="stylesheet" href="/static/styles.css?v=20260731-content-search-sharing">
+  <link rel="stylesheet" href="/static/styles.css?v=20260731-persist-canvas-token">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HEFSNZDXB9"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -261,7 +261,7 @@
           <button type="button" id="canvas-connect-button">Connect</button>
           <button type="button" id="canvas-disconnect-button" class="secondary" hidden>Disconnect</button>
         </div>
-        <p class="credential-note">Your token is kept in memory, sent only with Canvas requests, and is not saved by this app.</p>
+        <p class="credential-note">Your token is stored in this browser, sent only with Canvas requests, and removed when you disconnect.</p>
         <p id="canvas-connection-status" class="status" aria-live="polite"></p>
       </section>
 
@@ -454,7 +454,7 @@
             <button type="button" id="youtube-canvas-connect-button">Connect</button>
             <button type="button" id="youtube-canvas-disconnect-button" class="secondary" hidden>Disconnect</button>
           </div>
-          <p class="credential-note">Your token is kept in memory, sent only with Canvas requests, and is not saved by this app.</p>
+          <p class="credential-note">Your token is stored in this browser, sent only with Canvas requests, and removed when you disconnect.</p>
           <p id="youtube-canvas-connection-status" class="status" aria-live="polite"></p>
         </div>
       </section>
@@ -676,6 +676,6 @@
     </button>
   </div>
 
-<script src="/static/app.js?v=20260731-content-search-sharing" defer></script>
+<script src="/static/app.js?v=20260731-persist-canvas-token" defer></script>
 </body>
 </html>
